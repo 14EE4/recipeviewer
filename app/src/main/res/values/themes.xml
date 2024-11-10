@@ -1,0 +1,16 @@
+<resources>
+    <!-- Light, DarkActionBar 스타일의 테마 설정 -->
+    <style name="Theme.Recipeviewer" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryDark">@color/purple_700</item>
+        <item name="colorAccent">@color/teal_200</item>
+    </style>
+
+    <!-- 필요 시 추가할 수 있는 다른 테마들 -->
+    <style name="Theme.Recipeviewer.Dark" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <!-- 이 테마는 다크 모드에 적합 -->
+        <item name="colorPrimary">@color/purple_200</item>
+        <item name="colorPrimaryDark">@color/purple_500</item>
+        <item name="colorAccent">@color/teal_200</item>
+    </style>
+</resources>

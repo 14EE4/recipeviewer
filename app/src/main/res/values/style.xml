@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 예: 버튼 스타일 -->
+    <style name="CustomButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:backgroundTint">@color/teal_200</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <!-- 예: 텍스트 스타일 -->
+    <style name="CustomTextStyle" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">@color/purple_500</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <!-- 다른 스타일 요소 추가 가능 -->
+</resources>
+
