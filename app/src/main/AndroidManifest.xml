@@ -4,6 +4,7 @@
 
     <!-- 인터넷 접근 권한 추가 -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -29,7 +30,9 @@
         </activity>
 
         <activity android:name=".WebViewActivity" />
-        <activity android:name=".com.example.recipeviewer.RecipeDetailsActivity" />
+        <activity android:name=".RecipeDetailsActivity">
+            <!-- 필요한 설정 추가 가능 -->
+        </activity>
     </application>
 
 </manifest>

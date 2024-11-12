@@ -1,10 +1,11 @@
-package com.example.recipeviewer
+package com.example.recipeviewer.helpers
 
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import com.example.recipeviewer.Recipe
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

@@ -6,18 +6,30 @@ import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.recipeviewer.com.example.recipeviewer.RecipeDetailsActivity
 
+import android.widget.Button
+import android.widget.Toast
+import com.example.recipeviewer.helpers.DatabaseHelper
+import com.example.recipeviewer.helpers.VoiceSearchHelper
 class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var recipeAdapter: RecipeAdapter
-    private lateinit var recipeList: MutableList<Recipe> // MutableList로 수정
+    private lateinit var recipeList: MutableList<Recipe>
     private lateinit var databaseHelper: DatabaseHelper
+    private lateinit var voiceSearchHelper: VoiceSearchHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        voiceSearchHelper = VoiceSearchHelper(this) { query ->
+            searchRecipes(query) // 검색 메서드 호출
+        }
+
+        findViewById<Button>(R.id.voiceSearchButton).setOnClickListener {
+            voiceSearchHelper.startVoiceRecognition()
+        }
 
         // RecyclerView 초기화
         recyclerView = findViewById(R.id.recyclerView)
@@ -61,7 +73,7 @@ class MainActivity : AppCompatActivity() {
 
     // 레시피 목록 읽기
     private fun readRecipes(): MutableList<Recipe> {
-        return databaseHelper.readAllData() // DatabaseHelper에서 데이터 가져오기
+        return databaseHelper.readAllData().toMutableList() // DatabaseHelper에서 데이터 가져오기
     }
 
 
@@ -71,8 +83,13 @@ class MainActivity : AppCompatActivity() {
             recipe.title.contains(query ?: "", ignoreCase = true)
         }.toMutableList() // List<Recipe>를 MutableList<Recipe>로 변환
 
+        if (filteredList.isEmpty()) {
+            Toast.makeText(this, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
+        }
+
         recipeAdapter.updateData(filteredList) // 어댑터 데이터 업데이트
     }
+
 
 
     // 레시피 상세 정보 표시
@@ -83,4 +100,25 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra("RECIPE_URL", recipe.recipeUrl) // URL 전달
         startActivity(intent)
     }
+    private fun searchRecipes(query: String) {
+        // 검색어를 기준으로 필터링
+        val filteredRecipes = recipeList.filter { it.title.contains(query, ignoreCase = true) }.toMutableList()
+
+        // 어댑터의 데이터 업데이트
+        recipeAdapter.updateData(filteredRecipes)
+
+        // 검색된 결과에 대한 Toast 메시지
+        Toast.makeText(this, "검색 결과: $query", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        voiceSearchHelper.handlePermissionsResult(requestCode, grantResults)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        voiceSearchHelper.release()
+    }
+
 }

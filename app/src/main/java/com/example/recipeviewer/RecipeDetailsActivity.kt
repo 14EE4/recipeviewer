@@ -1,5 +1,5 @@
 // RecipeDetailsActivity.kt
-package com.example.recipeviewer.com.example.recipeviewer
+package com.example.recipeviewer
 
 import android.content.Intent
 import android.os.Bundle
