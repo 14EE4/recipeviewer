@@ -1,0 +1,96 @@
+<!-- Auto layout, variables, and unit scale are not yet supported -->
+<View
+  android:id="@+id/rectangle_8"
+  android:layout_width="375dp"
+  android:layout_height="744dp"
+  android:layout_alignParentLeft="true"
+  android:layout_alignParentTop="true"
+  android:layout_marginTop="68dp"
+  android:background="@drawable/rectangle_8"
+ />
+  
+<!-- drawable/rectangle_8.xml -->
+<vector
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:aapt="http://schemas.android.com/aapt"
+  android:width="375dp"
+  android:height="744dp"
+  android:viewportWidth="375"
+  android:viewportHeight="744"
+ >
+<group>
+<clip-path
+  android:pathData="M0 0H375V744H0V0Z"
+/>
+<path
+  android:pathData="M0 0V744H375V0"
+  android:fillColor="#FFFFFF"
+/><!-- Auto layout, variables, and unit scale are not yet supported -->
+<View
+  android:id="@+id/rectangle_3"
+  android:layout_width="0dp"
+  android:layout_height="0dp"
+  android:layout_alignParentLeft="true"
+  android:layout_alignParentRight="true"
+  android:layout_alignParentTop="true"
+  android:layout_alignParentBottom="true"
+  android:background="@drawable/rectangle_3"
+ />
+  
+<!-- drawable/rectangle_3.xml -->
+<vector
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:aapt="http://schemas.android.com/aapt"
+  android:width="328dp"
+  android:height="121dp"
+  android:viewportWidth="328"
+  android:viewportHeight="121"
+ >
+<group>
+<clip-path
+  android:pathData="M8.5 0.5H319.5C323.918 0.5 327.5 4.08172 327.5 8.5V112.5C327.5 116.918 323.918 120.5 319.5 120.5H8.5C4.08172 120.5 0.5 116.918 0.5 112.5V8.5C0.5 4.08172 4.08172 0.5 8.5 0.5Z"
+/>
+<path
+  android:pathData="M0.5 0.5V120.5H327.5V0.5"
+  android:fillColor="#FFFFFF"
+/>
+</group>
+<path
+  android:pathData="M8.5 0.5H319.5C323.918 0.5 327.5 4.08172 327.5 8.5V112.5C327.5 116.918 323.918 120.5 319.5 120.5H8.5C4.08172 120.5 0.5 116.918 0.5 112.5V8.5C0.5 4.08172 4.08172 0.5 8.5 0.5Z"
+  android:strokeWidth="1"
+  android:strokeColor="#1A000000"
+/>
+</vector>
+</group>
+</vector>
+<!-- Auto layout, variables, and unit scale are not yet supported -->
+<View
+  android:id="@+id/rectangle_8"
+  android:layout_width="327dp"
+  android:layout_height="56dp"
+  android:layout_alignParentLeft="true"
+  android:layout_marginLeft="24dp"
+  android:layout_alignParentTop="true"
+  android:layout_marginTop="400dp"
+  android:background="@drawable/rectangle_8"
+ />
+  
+<!-- drawable/rectangle_8.xml -->
+<vector
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:aapt="http://schemas.android.com/aapt"
+  android:width="327dp"
+  android:height="56dp"
+  android:viewportWidth="327"
+  android:viewportHeight="56"
+ >
+<group>
+<clip-path
+  android:pathData="M8 0H319C323.418 0 327 3.58172 327 8V48C327 52.4183 323.418 56 319 56H8C3.58172 56 0 52.4183 0 48V8C0 3.58172 3.58172 0 8 0Z"
+/>
+<path
+  android:pathData="M0 0V56H327V0"
+  android:fillColor="#7D00D0"
+/>
+</group>
+</vector>
