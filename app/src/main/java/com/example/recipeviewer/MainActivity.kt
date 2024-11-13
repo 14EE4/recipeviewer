@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
         // 로그인 화면 설정
         setContentView(R.layout.activity_loginpage) // 수정된 XML 파일 이름으로
 
+
         // XML에 정의된 뷰 참조
         val loginTitle: TextView = findViewById(R.id.textView)
         val welcomeMessage: TextView = findViewById(R.id.textView2)
@@ -124,12 +125,24 @@ class MainActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // 레시피 데이터 가져오기
-        recipeList = databaseHelper.readAllData().toMutableList()
+        // DatabaseHelper 초기화
+        databaseHelper = DatabaseHelper(this)
 
-        // RecipeAdapter 초기화 및 설정
-        recipeAdapter = RecipeAdapter(recipeList) { recipe ->
-            showRecipeDetails(recipe)
+        // 레시피 불러오기
+        recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
+
+        // 클릭 리스너와 함께 어댑터 초기화
+        val recipes = databaseHelper.readAllData().toMutableList() // List를 MutableList로 변환
+
+        recipeAdapter = RecipeAdapter(recipes) { recipe ->
+            val intent = Intent(this, RecipeDetailsActivity::class.java).apply {
+                putExtra("title", recipe.title)
+                putExtra("mainIngredients", recipe.mainIngredients)
+                putExtra("subIngredients", recipe.subIngredients)          // 부재료 전달
+                putExtra("alternativeIngredients", recipe.alternativeIngredients) // 대체재료 전달
+                putExtra("recipeUrl", recipe.recipeUrl)
+            }
+            startActivity(intent)
         }
         recyclerView.adapter = recipeAdapter
 
