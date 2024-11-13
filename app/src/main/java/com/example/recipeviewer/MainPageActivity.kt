@@ -2,6 +2,8 @@ package com.example.recipeviewer
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -70,6 +72,29 @@ class MainPageActivity : AppCompatActivity() {
                 return true
             }
         })
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_add_ingredient -> {
+                // 재료 추가 화면으로 이동
+                startActivity(Intent(this, AddIngredientActivity::class.java))
+                true
+            }
+            R.id.action_logout -> {
+                // 로그아웃 처리
+                Toast.makeText(this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     // 레시피 목록 읽기

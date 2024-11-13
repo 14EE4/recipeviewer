@@ -23,6 +23,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val COLUMN_USER_ID = "id"
         private const val COLUMN_EMAIL = "email"
         private const val COLUMN_PASSWORD = "password"
+
+        // Ingredients Table
+        private const val TABLE_INGREDIENTS = "ingredients"
+        private const val COLUMN_INGREDIENT_ID = "id"
+        private const val COLUMN_INGREDIENT_NAME = "name"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
@@ -39,19 +44,6 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             try {
                 copyDatabase()
                 Log.d("DatabaseHelper", "데이터베이스가 성공적으로 복사되었습니다.")
-
-                // 데이터베이스 복사 후 테이블 존재 여부 확인
-                val db = writableDatabase
-                val createUsersTable = """
-                    CREATE TABLE IF NOT EXISTS $TABLE_USERS (
-                        $COLUMN_USER_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        $COLUMN_EMAIL TEXT NOT NULL UNIQUE,
-                        $COLUMN_PASSWORD TEXT NOT NULL
-                    )
-                """
-                db.execSQL(createUsersTable)
-                db.close()
-
             } catch (e: IOException) {
                 Log.e("DatabaseHelper", "데이터베이스 복사 중 오류 발생", e)
                 throw RuntimeException("Error copying database")
@@ -59,6 +51,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         } else {
             Log.d("DatabaseHelper", "데이터베이스가 이미 존재합니다.")
         }
+
+        // 데이터베이스가 존재하든 존재하지 않든 테이블을 생성합니다.
+        val db = writableDatabase
+        createTables(db)
+        db.close()
     }
 
     private fun checkDatabaseExists(): Boolean {
@@ -92,6 +89,33 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             e.printStackTrace()
             Log.e("DatabaseHelper", "데이터베이스 복사 중 오류 발생: ${e.message}")
         }
+    }
+
+    private fun createTables(db: SQLiteDatabase) {
+        val createUsersTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_USERS (
+                $COLUMN_USER_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_EMAIL TEXT NOT NULL UNIQUE,
+                $COLUMN_PASSWORD TEXT NOT NULL
+            )
+        """
+        db.execSQL(createUsersTable)
+
+        val createIngredientsTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_INGREDIENTS (
+                $COLUMN_INGREDIENT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_INGREDIENT_NAME TEXT NOT NULL
+            )
+        """
+        db.execSQL(createIngredientsTable)
+    }
+
+    override fun onCreate(db: SQLiteDatabase?) {
+        // onCreate 메서드는 비워둡니다.
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+        // 데이터베이스 버전 업그레이드 시 필요한 작업
     }
 
     fun readAllData(): MutableList<Recipe> {
@@ -166,11 +190,14 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return isAuthenticated
     }
 
-    override fun onCreate(db: SQLiteDatabase?) {
-        // 데이터베이스 생성 시 필요한 작업
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        // 데이터베이스 버전 업그레이드 시 필요한 작업
+    // 재료 추가 기능
+    fun addIngredient(name: String): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_INGREDIENT_NAME, name)
+        }
+        val result = db.insert(TABLE_INGREDIENTS, null, values)
+        db.close()
+        return result != -1L
     }
 }
