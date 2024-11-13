@@ -12,9 +12,10 @@ import android.widget.Toast
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.helpers.VoiceSearchHelper
 
-
 import android.widget.EditText
 import android.widget.TextView
+
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -25,12 +26,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var voiceSearchHelper: VoiceSearchHelper
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.acyivity_loginpage)
+        // 로그인 화면 설정
+        setContentView(R.layout.activity_loginpage) // 수정된 XML 파일 이름으로
 
         // XML에 정의된 뷰 참조
         val loginTitle: TextView = findViewById(R.id.textView)
@@ -42,70 +42,57 @@ class MainActivity : AppCompatActivity() {
         val loginButton: Button = findViewById(R.id.button)
         val createAccountButton: Button = findViewById(R.id.button2)
 
-        // 텍스트 또는 속성을 설정할 수 있습니다.
-        loginTitle.text = "Login"
-        welcomeMessage.text = "Welcome back to the app"
-        emailEditText.setText("Hello@email.com")
+        // DatabaseHelper 초기화
+        databaseHelper = DatabaseHelper(this)
 
-        // 버튼 클릭 이벤트 설정
+        // 로그인 버튼 클릭 이벤트 설정 (데이터베이스 검사 없이 바로 메인 페이지로 이동)
         loginButton.setOnClickListener {
             val email = emailEditText.text.toString()
             val password = passwordEditText.text.toString()
 
-
-
-
-            // 테스트용으로 바로 initializeMainPage() 호출
-            initializeMainPage()
+            // 로그인 검증 생략하고 바로 메인 페이지로 이동
+            Toast.makeText(this, "로그인 성공!", Toast.LENGTH_SHORT).show()
+            initializeMainPage() // 메인 페이지 초기화
         }
 
-
+        // 회원가입 버튼 클릭 이벤트 설정
         createAccountButton.setOnClickListener {
-            // 계정 생성 화면으로 이동
+            // 회원가입 화면으로 이동
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
-
-
-
-
     }
 
     // 레시피 목록 읽기
     private fun readRecipes(): MutableList<Recipe> {
-        return databaseHelper.readAllData().toMutableList() // DatabaseHelper에서 데이터 가져오기
+        return databaseHelper.readAllData().toMutableList()
     }
-
 
     // 레시피 필터링
     private fun filter(query: String?) {
         val filteredList = recipeList.filter { recipe ->
             recipe.title.contains(query ?: "", ignoreCase = true)
-        }.toMutableList() // List<Recipe>를 MutableList<Recipe>로 변환
+        }.toMutableList()
 
         if (filteredList.isEmpty()) {
             Toast.makeText(this, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        recipeAdapter.updateData(filteredList) // 어댑터 데이터 업데이트
+        recipeAdapter.updateData(filteredList)
     }
-
-
 
     // 레시피 상세 정보 표시
     private fun showRecipeDetails(recipe: Recipe) {
-        val intent = Intent(this, RecipeDetailsActivity::class.java)
-        intent.putExtra("RECIPE_TITLE", recipe.title)
-        intent.putExtra("MAIN_INGREDIENTS", recipe.mainIngredients)
-        intent.putExtra("RECIPE_URL", recipe.recipeUrl) // URL 전달
+        val intent = Intent(this, RecipeDetailsActivity::class.java).apply {
+            putExtra("RECIPE_TITLE", recipe.title)
+            putExtra("MAIN_INGREDIENTS", recipe.mainIngredients)
+            putExtra("RECIPE_URL", recipe.recipeUrl)
+        }
         startActivity(intent)
     }
+
     private fun searchRecipes(query: String) {
-        // 검색어를 기준으로 필터링
         val filteredRecipes = recipeList.filter { it.title.contains(query, ignoreCase = true) }.toMutableList()
-
-        // 어댑터의 데이터 업데이트
         recipeAdapter.updateData(filteredRecipes)
-
-        // 검색된 결과에 대한 Toast 메시지
         Toast.makeText(this, "검색 결과: $query", Toast.LENGTH_SHORT).show()
     }
 
@@ -125,7 +112,7 @@ class MainActivity : AppCompatActivity() {
 
         // VoiceSearchHelper 초기화
         voiceSearchHelper = VoiceSearchHelper(this) { query ->
-            searchRecipes(query) // 검색 메서드 호출
+            searchRecipes(query)
         }
 
         // 음성 검색 버튼 설정
@@ -137,21 +124,12 @@ class MainActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // DatabaseHelper 초기화 및 레시피 데이터 가져오기
-        databaseHelper = DatabaseHelper(this)
-        recipeList = databaseHelper.readAllData().toMutableList() // DB에서 레시피 불러오기
+        // 레시피 데이터 가져오기
+        recipeList = databaseHelper.readAllData().toMutableList()
 
         // RecipeAdapter 초기화 및 설정
         recipeAdapter = RecipeAdapter(recipeList) { recipe ->
-            // 각 레시피 아이템 클릭 시 상세 정보 화면으로 이동
-            val intent = Intent(this, RecipeDetailsActivity::class.java).apply {
-                putExtra("title", recipe.title)
-                putExtra("mainIngredients", recipe.mainIngredients)
-                putExtra("subIngredients", recipe.subIngredients)          // 부재료 전달
-                putExtra("alternativeIngredients", recipe.alternativeIngredients) // 대체재료 전달
-                putExtra("recipeUrl", recipe.recipeUrl)
-            }
-            startActivity(intent)
+            showRecipeDetails(recipe)
         }
         recyclerView.adapter = recipeAdapter
 
@@ -168,7 +146,4 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-
-
 }
-

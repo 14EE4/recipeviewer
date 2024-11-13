@@ -33,6 +33,8 @@
         <activity android:name=".RecipeDetailsActivity">
             <!-- 필요한 설정 추가 가능 -->
         </activity>
+        <activity android:name=".RegisterActivity" />
+
     </application>
 
 </manifest>

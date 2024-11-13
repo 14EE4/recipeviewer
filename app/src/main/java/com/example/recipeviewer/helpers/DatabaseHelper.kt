@@ -1,5 +1,6 @@
 package com.example.recipeviewer.helpers
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
@@ -10,14 +11,18 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-
-
 class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         private const val DATABASE_NAME = "recipes.db" // 데이터베이스 이름
         private const val DATABASE_VERSION = 1 // 데이터베이스 버전
         private const val ASSET_DB_PATH = "databases/$DATABASE_NAME"
+
+        // Users Table
+        private const val TABLE_USERS = "users"
+        private const val COLUMN_USER_ID = "id"
+        private const val COLUMN_EMAIL = "email"
+        private const val COLUMN_PASSWORD = "password"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
@@ -36,14 +41,15 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                 Log.d("DatabaseHelper", "데이터베이스가 성공적으로 복사되었습니다.")
 
                 // 데이터베이스 복사 후 테이블 존재 여부 확인
-                val db = readableDatabase
-                val cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='recipes'", null)
-                if (cursor.moveToFirst()) {
-                    Log.d("DatabaseHelper", "recipes 테이블이 존재합니다.")
-                } else {
-                    Log.e("DatabaseHelper", "recipes 테이블이 존재하지 않습니다.")
-                }
-                cursor.close()
+                val db = writableDatabase
+                val createUsersTable = """
+                    CREATE TABLE IF NOT EXISTS $TABLE_USERS (
+                        $COLUMN_USER_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                        $COLUMN_EMAIL TEXT NOT NULL UNIQUE,
+                        $COLUMN_PASSWORD TEXT NOT NULL
+                    )
+                """
+                db.execSQL(createUsersTable)
                 db.close()
 
             } catch (e: IOException) {
@@ -55,16 +61,12 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         }
     }
 
-
-
     private fun checkDatabaseExists(): Boolean {
         val dbFile = File(dbPath)
         val exists = dbFile.exists() && dbFile.length() > 0
         Log.d("DatabaseHelper", "데이터베이스 존재 여부: $exists, 경로: $dbPath, 파일 크기: ${dbFile.length()}")
         return exists
     }
-
-
 
     private fun copyDatabase() {
         val dbPath = context.getDatabasePath(DATABASE_NAME).absolutePath
@@ -91,8 +93,6 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             Log.e("DatabaseHelper", "데이터베이스 복사 중 오류 발생: ${e.message}")
         }
     }
-
-
 
     fun readAllData(): MutableList<Recipe> {
         val recipeList = mutableListOf<Recipe>()
@@ -136,7 +136,6 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                 } while (cursor.moveToNext())
             }
         } else {
-            // 열 이름이 잘못된 경우 로그 출력
             Log.e("Database", "One or more column names are incorrect.")
         }
 
@@ -144,7 +143,28 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return recipeList
     }
 
+    // 회원가입 기능
+    fun registerUser(email: String, password: String): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_EMAIL, email)
+            put(COLUMN_PASSWORD, password)
+        }
+        val result = db.insert(TABLE_USERS, null, values)
+        db.close()
+        return result != -1L
+    }
 
+    // 로그인 기능
+    fun authenticateUser(email: String, password: String): Boolean {
+        val db = readableDatabase
+        val query = "SELECT * FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ? AND $COLUMN_PASSWORD = ?"
+        val cursor = db.rawQuery(query, arrayOf(email, password))
+        val isAuthenticated = cursor.count > 0
+        cursor.close()
+        db.close()
+        return isAuthenticated
+    }
 
     override fun onCreate(db: SQLiteDatabase?) {
         // 데이터베이스 생성 시 필요한 작업
@@ -153,5 +173,4 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         // 데이터베이스 버전 업그레이드 시 필요한 작업
     }
-
 }

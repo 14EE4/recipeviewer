@@ -49,6 +49,7 @@
         android:id="@+id/editTextTextPassword2"
         android:layout_width="300dp"
         android:layout_height="60dp"
+        android:hint="Enter password"
         android:ems="10"
         android:inputType="textPassword"
         app:layout_constraintBottom_toBottomOf="parent"
