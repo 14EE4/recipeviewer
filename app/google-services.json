@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "533956032592",
+    "project_id": "recipeviewer-12a9c",
+    "storage_bucket": "recipeviewer-12a9c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533956032592:android:43d6b6c6d59d7d58e23955",
+        "android_client_info": {
+          "package_name": "com.example.recipeviewer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvYX9KIITcli5Oh51HqeHMoqqJWl6rkto"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
