@@ -34,6 +34,8 @@
             <!-- 필요한 설정 추가 가능 -->
         </activity>
         <activity android:name=".RegisterActivity" />
+        <activity android:name=".MainPageActivity" />
+
 
     </application>
 
