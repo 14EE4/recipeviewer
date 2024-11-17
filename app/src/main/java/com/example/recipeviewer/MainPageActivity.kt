@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.Toast
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.helpers.VoiceSearchHelper
+import com.example.recipeviewer.models.Recipe
 
 class MainPageActivity : AppCompatActivity() {
 

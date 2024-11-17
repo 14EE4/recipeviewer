@@ -6,7 +6,8 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import com.example.recipeviewer.Recipe
+import com.example.recipeviewer.models.Ingredient
+import com.example.recipeviewer.models.Recipe
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -28,6 +29,9 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val TABLE_INGREDIENTS = "ingredients"
         private const val COLUMN_INGREDIENT_ID = "id"
         private const val COLUMN_INGREDIENT_NAME = "name"
+        private const val COLUMN_INGREDIENT_QUANTITY = "quantity"
+        private const val COLUMN_INGREDIENT_UNIT = "unit"
+        private const val COLUMN_INGREDIENT_EXPIRY_DATE = "expiry_date"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
@@ -102,11 +106,14 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         db.execSQL(createUsersTable)
 
         val createIngredientsTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_INGREDIENTS (
-                $COLUMN_INGREDIENT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COLUMN_INGREDIENT_NAME TEXT NOT NULL
-            )
-        """
+        CREATE TABLE IF NOT EXISTS $TABLE_INGREDIENTS (
+            $COLUMN_INGREDIENT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COLUMN_INGREDIENT_NAME TEXT NOT NULL,
+            $COLUMN_INGREDIENT_QUANTITY INTEGER NOT NULL,
+            $COLUMN_INGREDIENT_UNIT TEXT NOT NULL,
+            $COLUMN_INGREDIENT_EXPIRY_DATE TEXT NOT NULL
+        )
+    """
         db.execSQL(createIngredientsTable)
     }
 
@@ -191,13 +198,61 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     }
 
     // 재료 추가 기능
-    fun addIngredient(name: String): Boolean {
+    fun addIngredient(name: String, quantity: Int, unit: String, expiryDate: String): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_INGREDIENT_NAME, name)
+            put(COLUMN_INGREDIENT_QUANTITY, quantity)
+            put(COLUMN_INGREDIENT_UNIT, unit)
+            put(COLUMN_INGREDIENT_EXPIRY_DATE, expiryDate)
         }
         val result = db.insert(TABLE_INGREDIENTS, null, values)
         db.close()
         return result != -1L
     }
+    //수정
+    fun updateIngredient(id: Int, name: String, quantity: Int, unit: String, expiryDate: String) {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_INGREDIENT_NAME, name)
+            put(COLUMN_INGREDIENT_QUANTITY, quantity)
+            put(COLUMN_INGREDIENT_UNIT, unit)
+            put(COLUMN_INGREDIENT_EXPIRY_DATE, expiryDate)
+        }
+        db.update(TABLE_INGREDIENTS, values, "$COLUMN_INGREDIENT_ID = ?", arrayOf(id.toString()))
+    }
+    //삭제
+    fun deleteIngredient(id: Int) {
+        val db = writableDatabase
+        db.delete(TABLE_INGREDIENTS, "$COLUMN_INGREDIENT_ID = ?", arrayOf(id.toString()))
+    }
+    // 재료 목록 초기화 기능
+    fun clearIngredients() {
+        val db = writableDatabase
+        db.delete(TABLE_INGREDIENTS, null, null)
+        db.close()
+    }
+    // 재료 목록 읽기
+    fun readIngredients(): List<Ingredient> {
+        val db = readableDatabase
+        val cursor: Cursor = db.rawQuery("SELECT * FROM $TABLE_INGREDIENTS", null)
+        val ingredients = mutableListOf<Ingredient>()
+
+        if (cursor.moveToFirst()) {
+            do {
+                val ingredient = Ingredient(
+                    id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_ID)),
+                    name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_NAME)),
+                    quantity = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_QUANTITY)),
+                    unit = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_UNIT)),
+                    expiryDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_EXPIRY_DATE))
+                )
+                ingredients.add(ingredient)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        return ingredients
+    }
+
 }

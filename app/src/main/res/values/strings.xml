@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">recipeviewer</string>
+    <string-array name="units_array">
+        <item>개</item>
+        <item>g</item>
+        <item>ml</item>
+    </string-array>
 </resources>

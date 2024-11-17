@@ -1,5 +1,5 @@
 // Recipe.kt
-package com.example.recipeviewer
+package com.example.recipeviewer.models
 
 data class Recipe(
     val id: Int,  // id 매개변수 추가
