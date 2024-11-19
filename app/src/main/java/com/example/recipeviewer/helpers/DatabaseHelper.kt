@@ -255,4 +255,29 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return ingredients
     }
 
+    fun getAllIngredients(): MutableList<Ingredient> {
+        val ingredientList = mutableListOf<Ingredient>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_INGREDIENTS", null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val id = cursor.getInt(cursor.getColumnIndex(COLUMN_INGREDIENT_ID))
+                val name = cursor.getString(cursor.getColumnIndex(COLUMN_INGREDIENT_NAME))
+                val quantity = cursor.getInt(cursor.getColumnIndex(COLUMN_INGREDIENT_QUANTITY))
+                val unit = cursor.getString(cursor.getColumnIndex(COLUMN_INGREDIENT_UNIT))
+                val expiryDate = cursor.getString(cursor.getColumnIndex(COLUMN_INGREDIENT_EXPIRY_DATE))
+
+                val ingredient = Ingredient(id, name, quantity, unit, expiryDate)
+                ingredientList.add(ingredient)
+
+                // 재료 로그 출력
+                Log.d("DatabaseHelper", "Ingredient: $ingredient")
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        db.close()
+        return ingredientList
+    }
+
 }
