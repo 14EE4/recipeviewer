@@ -5,4 +5,6 @@
         <item>g</item>
         <item>ml</item>
     </string-array>
+    <string name="edit_ingredient">수정</string>
+    <string name="delete_ingredient">삭제</string>
 </resources>

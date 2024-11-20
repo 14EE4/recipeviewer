@@ -50,9 +50,20 @@ class AddIngredientActivity : AppCompatActivity() {
         // 재료 불러오기
         ingredientList = databaseHelper.readIngredients().toMutableList()
 
-        // 어댑터 초기화
-        ingredientAdapter = IngredientAdapter(ingredientList)
+        // IngredientAdapter 초기화 및 클릭 리스너 설정
+        ingredientAdapter = IngredientAdapter(ingredientList, this)
         recyclerView.adapter = ingredientAdapter
+        ingredientAdapter.setOnIngredientClickListener(object : IngredientAdapter.OnIngredientClickListener {
+            override fun onEditIngredient(ingredient: Ingredient) {
+                // 재료 수정 다이얼로그 또는 액티비티 표시
+                // 예: showEditIngredientDialog(ingredient)
+            }
+
+            override fun onDeleteIngredient(ingredient: Ingredient) {
+                // 재료 삭제 확인 다이얼로그 표시 후 삭제
+                // 예: showDeleteConfirmationDialog(ingredient)
+            }
+        })
 
         addButton.setOnClickListener {
             val ingredientName = ingredientNameEditText.text.toString()
@@ -89,6 +100,7 @@ class AddIngredientActivity : AppCompatActivity() {
             ingredientAdapter.updateData(ingredientList)
         }
     }
+
     override fun onResume() {
         super.onResume()
         // 재료 목록을 데이터베이스에서 다시 불러오기
