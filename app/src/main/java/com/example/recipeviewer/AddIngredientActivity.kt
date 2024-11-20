@@ -16,6 +16,9 @@ class AddIngredientActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var ingredientAdapter: IngredientAdapter
     private lateinit var ingredientList: MutableList<Ingredient>
+    private lateinit var excludedIngredientList: MutableList<Ingredient> // 제외된 재료 목록
+    private lateinit var excludedRecyclerView: RecyclerView // 제외 재료 목록을 위한 RecyclerView
+    private lateinit var excludedAdapter: IngredientAdapter // 제외 재료용 어댑터
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +31,7 @@ class AddIngredientActivity : AppCompatActivity() {
         val ingredientUnitSpinner: Spinner = findViewById(R.id.spinnerIngredientUnit)
         val ingredientExpiryDateEditText: EditText = findViewById(R.id.editTextIngredientExpiryDate)
         val addButton: Button = findViewById(R.id.buttonAddIngredient)
+        val excludeButton: Button = findViewById(R.id.button4) // 제외 추가 버튼
         val clearButton: Button = findViewById(R.id.buttonClearIngredients)
 
         // 날짜 선택기 설정
@@ -47,12 +51,20 @@ class AddIngredientActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
+        // 제외 재료 목록 RecyclerView 초기화
+        excludedRecyclerView = findViewById(R.id.recyclerViewExcluded)
+        excludedRecyclerView.layoutManager = LinearLayoutManager(this)
+
         // 재료 불러오기
         ingredientList = databaseHelper.readIngredients().toMutableList()
+        excludedIngredientList = mutableListOf() // 제외된 재료 초기화
 
         // 어댑터 초기화
         ingredientAdapter = IngredientAdapter(ingredientList)
+        excludedAdapter = IngredientAdapter(excludedIngredientList) // 제외된 재료 어댑터
+
         recyclerView.adapter = ingredientAdapter
+        excludedRecyclerView.adapter = excludedAdapter // 제외된 재료 목록 어댑터 설정
 
         addButton.setOnClickListener {
             val ingredientName = ingredientNameEditText.text.toString()
@@ -61,13 +73,22 @@ class AddIngredientActivity : AppCompatActivity() {
             val ingredientExpiryDate = ingredientExpiryDateEditText.text.toString()
 
             if (ingredientName.isNotEmpty() && ingredientUnit.isNotEmpty() && ingredientExpiryDate.isNotEmpty()) {
-                // 재료를 데이터베이스에 추가
                 val success = databaseHelper.addIngredient(ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
                 if (success) {
                     Toast.makeText(this, "재료가 추가되었습니다.", Toast.LENGTH_SHORT).show()
-                    // 재료 목록 업데이트
-                    ingredientList.add(Ingredient(0, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate))
-                    ingredientAdapter.updateData(ingredientList)
+
+                    // 새 재료 추가
+                    val newIngredient = Ingredient(0, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
+                    ingredientList.add(newIngredient)
+
+                    // RecyclerView 업데이트
+                    val position = ingredientList.size - 1
+                    ingredientAdapter.notifyItemInserted(position)
+
+                    // RecyclerView 자동 스크롤
+                    recyclerView.scrollToPosition(position)
+
+                    // 입력 필드 초기화
                     ingredientNameEditText.text.clear()
                     ingredientQuantityEditText.text.clear()
                     ingredientUnitSpinner.setSelection(0)
@@ -78,21 +99,47 @@ class AddIngredientActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "모든 필드를 입력하세요.", Toast.LENGTH_SHORT).show()
             }
-
         }
+
+        excludeButton.setOnClickListener {
+            val ingredientName = ingredientNameEditText.text.toString()
+            val ingredientQuantity = ingredientQuantityEditText.text.toString().toIntOrNull() ?: 0
+            val ingredientUnit = ingredientUnitSpinner.selectedItem.toString()
+            val ingredientExpiryDate = ingredientExpiryDateEditText.text.toString()
+
+            if (ingredientName.isNotEmpty() && ingredientUnit.isNotEmpty() && ingredientExpiryDate.isNotEmpty()) {
+                // 제외 재료 목록에 추가
+                val excludedIngredient = Ingredient(0, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
+                excludedIngredientList.add(excludedIngredient)
+                excludedAdapter.updateData(excludedIngredientList)
+                Toast.makeText(this, "재료가 제외 목록에 추가되었습니다.", Toast.LENGTH_SHORT).show()
+
+                // 입력 필드 초기화
+                ingredientNameEditText.text.clear()
+                ingredientQuantityEditText.text.clear()
+                ingredientUnitSpinner.setSelection(0)
+                ingredientExpiryDateEditText.text.clear()
+            } else {
+                Toast.makeText(this, "모든 필드를 입력하세요.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         clearButton.setOnClickListener {
             // 재료 목록 초기화
             databaseHelper.clearIngredients()
             Toast.makeText(this, "재료 목록이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
-            // 재료 목록 업데이트
             ingredientList.clear()
             ingredientAdapter.updateData(ingredientList)
+            excludedIngredientList.clear()
+            excludedAdapter.updateData(excludedIngredientList)
         }
     }
+
     override fun onResume() {
         super.onResume()
         // 재료 목록을 데이터베이스에서 다시 불러오기
         ingredientList = databaseHelper.readIngredients().toMutableList()
         ingredientAdapter.updateData(ingredientList)
+
     }
 }

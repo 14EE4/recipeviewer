@@ -21,7 +21,7 @@
         android:hint="분량"
         android:inputType="number"
         android:minHeight="48dp"
-        android:padding="12dp" />
+        android:padding="16dp" />
 
     <Spinner
         android:id="@+id/spinnerIngredientUnit"
@@ -47,14 +47,32 @@
         android:text="재료 추가" />
 
     <Button
+        android:id="@+id/button4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="제외추가" />
+
+    <Button
         android:id="@+id/buttonClearIngredients"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="재료 목록 초기화" />
 
+    <!-- 일반 재료 목록 RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:scrollbars="vertical" />
+
+    <!-- 제외된 재료 목록 RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewExcluded"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"
+        android:background="@android:color/darker_gray"
+        android:scrollbars="vertical" />
 </LinearLayout>

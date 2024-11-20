@@ -1,16 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
+
+    <!-- 회원가입 타이틀 -->
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="80dp"
+        android:text="회원가입"
+        android:textColor="@android:color/black"
+        android:textSize="24sp" />
 
     <!-- 아이디 입력 필드 -->
     <EditText
         android:id="@+id/editTextUsername"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
         android:hint="Username"
         android:inputType="text"
         android:minHeight="48dp"
@@ -21,15 +32,25 @@
         android:id="@+id/editTextPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:hint="Password"
         android:inputType="textPassword"
         android:minHeight="48dp"
         android:padding="12dp" />
 
+    <!-- 비밀번호 확인 입력 필드 -->
+
     <!-- 회원가입 버튼 -->
+
+
     <Button
         android:id="@+id/registerButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sign Up" />
+        android:layout_marginTop="100dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:text="Sign Up"
+        android:textSize="18sp" />
+
+
 </LinearLayout>
