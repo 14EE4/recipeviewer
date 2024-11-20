@@ -26,6 +26,18 @@
         android:layout_height="wrap_content"
         android:queryHint="Search recipes" />
 
+    <Button
+        android:id="@+id/ingredientSearchButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="재료 검색" />
+
+    <Button
+        android:id="@+id/showAllRecipesButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="모든 레시피 보기" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

@@ -13,6 +13,7 @@ import android.widget.Toast
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.helpers.VoiceSearchHelper
 import com.example.recipeviewer.models.Recipe
+import android.util.Log
 
 class MainPageActivity : AppCompatActivity() {
 
@@ -73,6 +74,16 @@ class MainPageActivity : AppCompatActivity() {
                 return true
             }
         })
+
+        // 재료 검색 버튼 설정
+        findViewById<Button>(R.id.ingredientSearchButton).setOnClickListener {
+            searchAndSortRecipesByIngredients()
+        }
+
+        // 모든 레시피 보기 버튼 설정
+        findViewById<Button>(R.id.showAllRecipesButton).setOnClickListener {
+            showAllRecipes()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -96,6 +107,10 @@ class MainPageActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showAllRecipes() {
+        recipeAdapter.updateData(recipeList)
     }
 
     // 레시피 목록 읽기
@@ -131,4 +146,54 @@ class MainPageActivity : AppCompatActivity() {
         super.onDestroy()
         voiceSearchHelper.release()
     }
+
+    private fun parseIngredients(ingredients: String): List<String> {
+        val parsedIngredients = ingredients.split(",").map { extractIngredientName(it) }
+        //Log.d("MainPageActivity", "Parsed Ingredients: $parsedIngredients")
+        return parsedIngredients
+    }
+
+    private fun parseAllIngredients(recipe: Recipe): List<String> {
+        val mainIngredients = parseIngredients(recipe.mainIngredients)
+        val subIngredients = parseIngredients(recipe.subIngredients)
+        val alternativeIngredients = parseIngredients(recipe.alternativeIngredients)
+        val allIngredients = mainIngredients + subIngredients + alternativeIngredients
+        Log.d("MainPageActivity", "All Parsed Ingredients for Recipe '${recipe.title}': $allIngredients")
+        return allIngredients
+    }
+
+    private fun extractIngredientName(ingredient: String): String {
+        // 숫자, 괄호, 단위 등을 제거하여 재료 이름만 추출
+        return ingredient.replace(Regex("\\s*\\d+.*"), "").trim()
+    }
+
+
+
+    private fun searchAndSortRecipesByIngredients() {
+        val ingredientList = databaseHelper.getAllIngredients() // 모든 재료를 가져오는 함수
+        val matchingRecipes = recipeList.map { recipe ->
+            val recipeIngredients = parseAllIngredients(recipe)
+            val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
+                ingredientList.any { dbIngredient ->
+                    recipeIngredient.contains(dbIngredient.name, ignoreCase = true)
+                }
+            }
+
+            // Logcat에 출력
+            Log.d("RecipeMatch", "Recipe '${recipe.title}' has $commonIngredientsCount matching ingredients.")
+
+            Pair(recipe, commonIngredientsCount)
+        }.filter { it.second > 0 } // 일치하는 재료가 하나라도 있는 레시피만 필터링
+            .sortedByDescending { it.second } // 일치하는 개수가 많은 순서대로 정렬
+
+        if (matchingRecipes.isEmpty()) {
+            Toast.makeText(this, "비슷한 재료가 있는 레시피가 없습니다.", Toast.LENGTH_SHORT).show()
+        } else {
+
+            val sortedRecipes = matchingRecipes.map { it.first }.toMutableList()
+            recipeAdapter.updateData(sortedRecipes)
+            Toast.makeText(this, "${sortedRecipes.size}개의 레시피가 검색되었습니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 }
