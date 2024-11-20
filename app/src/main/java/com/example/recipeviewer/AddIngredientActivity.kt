@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.models.Ingredient
+import com.example.recipeviewer.helpers.VoiceSearchHelper
 import java.util.*
 
 class AddIngredientActivity : AppCompatActivity() {
@@ -19,6 +20,7 @@ class AddIngredientActivity : AppCompatActivity() {
     private lateinit var excludedIngredientList: MutableList<Ingredient> // 제외된 재료 목록
     private lateinit var excludedRecyclerView: RecyclerView // 제외 재료 목록을 위한 RecyclerView
     private lateinit var excludedAdapter: IngredientAdapter // 제외 재료용 어댑터
+    private lateinit var voiceSearchHelper: VoiceSearchHelper // 음성인식
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +35,13 @@ class AddIngredientActivity : AppCompatActivity() {
         val addButton: Button = findViewById(R.id.buttonAddIngredient)
         val excludeButton: Button = findViewById(R.id.button4) // 제외 추가 버튼
         val clearButton: Button = findViewById(R.id.buttonClearIngredients)
+        voiceSearchHelper = VoiceSearchHelper(this) { spokenText ->
+            ingredientNameEditText.setText(spokenText) // 음성 인식 결과를 재료 이름 입력 필드에 설정
+        }
+        // 음성 검색 버튼 클릭 리스너
+        findViewById<Button>(R.id.buttonVoiceInput).setOnClickListener {
+            voiceSearchHelper.startVoiceRecognition()
+        }
 
         // 날짜 선택기 설정
         ingredientExpiryDateEditText.setOnClickListener {
@@ -61,23 +70,12 @@ class AddIngredientActivity : AppCompatActivity() {
 
         // IngredientAdapter 초기화 및 클릭 리스너 설정
         ingredientAdapter = IngredientAdapter(ingredientList, this)
-        // 어댑터 초기화
-        ingredientAdapter = IngredientAdapter(ingredientList)
-        excludedAdapter = IngredientAdapter(excludedIngredientList) // 제외된 재료 어댑터
+
+        excludedAdapter = IngredientAdapter(excludedIngredientList, this) // 제외된 재료 어댑터
 
         recyclerView.adapter = ingredientAdapter
         excludedRecyclerView.adapter = excludedAdapter // 제외된 재료 목록 어댑터 설정
-        ingredientAdapter.setOnIngredientClickListener(object : IngredientAdapter.OnIngredientClickListener {
-            override fun onEditIngredient(ingredient: Ingredient) {
-                // 재료 수정 다이얼로그 또는 액티비티 표시
-                // 예: showEditIngredientDialog(ingredient)
-            }
 
-            override fun onDeleteIngredient(ingredient: Ingredient) {
-                // 재료 삭제 확인 다이얼로그 표시 후 삭제
-                // 예: showDeleteConfirmationDialog(ingredient)
-            }
-        })
 
         addButton.setOnClickListener {
             val ingredientName = ingredientNameEditText.text.toString()
@@ -150,11 +148,24 @@ class AddIngredientActivity : AppCompatActivity() {
         }
     }
 
+
+
     override fun onResume() {
         super.onResume()
         // 재료 목록을 데이터베이스에서 다시 불러오기
         ingredientList = databaseHelper.readIngredients().toMutableList()
         ingredientAdapter.updateData(ingredientList)
 
+    }
+
+    // 권한 요청 결과 처리
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        voiceSearchHelper.handlePermissionsResult(requestCode, grantResults)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        voiceSearchHelper.release()
     }
 }

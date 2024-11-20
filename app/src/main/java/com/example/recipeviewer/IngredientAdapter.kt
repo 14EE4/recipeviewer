@@ -7,15 +7,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.app.DatePickerDialog
-import androidx.compose.ui.semantics.setText
-import androidx.compose.ui.semantics.text
+
 import androidx.recyclerview.widget.RecyclerView
 import androidx.appcompat.app.AlertDialog
 import com.example.recipeviewer.models.Ingredient
 import kotlin.text.toIntOrNull
 import com.example.recipeviewer.helpers.DatabaseHelper
 import android.widget.*
-import androidx.compose.material3.DatePickerDialog
+
 import java.util.Calendar
 
 class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, private val context: Context) : RecyclerView.Adapter<IngredientAdapter.IngredientViewHolder>() {
@@ -140,16 +139,11 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
 
         }
     }
-    interface OnIngredientClickListener {
-        fun onEditIngredient(ingredient: Ingredient)
-        fun onDeleteIngredient(ingredient: Ingredient)
-    }
 
-    private lateinit var listener: OnIngredientClickListener
 
-    fun setOnIngredientClickListener(listener: OnIngredientClickListener) {
-        this.listener = listener
-    }
+
+
+
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): IngredientViewHolder {

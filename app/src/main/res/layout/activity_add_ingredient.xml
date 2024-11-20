@@ -6,13 +6,27 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <EditText
-        android:id="@+id/editTextIngredientName"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="재료 이름"
-        android:minHeight="48dp"
-        android:padding="12dp" />
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/editTextIngredientName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="재료 이름"
+            android:minHeight="48dp"
+            android:padding="12dp" />
+
+        <Button
+            android:id="@+id/buttonVoiceInput"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="음성 입력" />
+
+    </LinearLayout>
 
     <EditText
         android:id="@+id/editTextIngredientQuantity"
