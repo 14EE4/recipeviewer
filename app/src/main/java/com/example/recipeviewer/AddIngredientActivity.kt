@@ -4,6 +4,8 @@ import android.app.DatePickerDialog
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.semantics.setSelection
+import androidx.compose.ui.semantics.setText
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.helpers.DatabaseHelper
@@ -21,6 +23,9 @@ class AddIngredientActivity : AppCompatActivity() {
     private lateinit var excludedRecyclerView: RecyclerView // 제외 재료 목록을 위한 RecyclerView
     private lateinit var excludedAdapter: IngredientAdapter // 제외 재료용 어댑터
     private lateinit var voiceSearchHelper: VoiceSearchHelper // 음성인식
+    private lateinit var ingredientNameEditText: EditText
+    private lateinit var ingredientQuantityEditText: EditText
+    private lateinit var ingredientUnitSpinner: Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,16 +33,31 @@ class AddIngredientActivity : AppCompatActivity() {
 
         databaseHelper = DatabaseHelper(this)
 
-        val ingredientNameEditText: EditText = findViewById(R.id.editTextIngredientName)
-        val ingredientQuantityEditText: EditText = findViewById(R.id.editTextIngredientQuantity)
-        val ingredientUnitSpinner: Spinner = findViewById(R.id.spinnerIngredientUnit)
+        // 뷰 초기화
+        ingredientNameEditText = findViewById(R.id.editTextIngredientName)
+        ingredientQuantityEditText = findViewById(R.id.editTextIngredientQuantity)
+        ingredientUnitSpinner = findViewById(R.id.spinnerIngredientUnit)
         val ingredientExpiryDateEditText: EditText = findViewById(R.id.editTextIngredientExpiryDate)
         val addButton: Button = findViewById(R.id.buttonAddIngredient)
         val excludeButton: Button = findViewById(R.id.button4) // 제외 추가 버튼
         val clearButton: Button = findViewById(R.id.buttonClearIngredients)
+
+        // Spinner에 사용할 데이터 리스트 생성
+        val unitList = mutableListOf<String>()
+        unitList.addAll(resources.getStringArray(R.array.units_array).toList()) // 기존 단위 추가
+
+        // ArrayAdapter 생성 (수정 가능한 리스트 사용)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, unitList)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        // Spinner에 ArrayAdapter 설정
+        ingredientUnitSpinner.adapter = adapter
+
+        // VoiceSearchHelper 초기화
         voiceSearchHelper = VoiceSearchHelper(this) { spokenText ->
-            ingredientNameEditText.setText(spokenText) // 음성 인식 결과를 재료 이름 입력 필드에 설정
+            parseAndFillIngredientFields(spokenText, ingredientNameEditText, ingredientQuantityEditText, ingredientUnitSpinner)
         }
+
         // 음성 검색 버튼 클릭 리스너
         findViewById<Button>(R.id.buttonVoiceInput).setOnClickListener {
             voiceSearchHelper.startVoiceRecognition()
@@ -167,5 +187,40 @@ class AddIngredientActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         voiceSearchHelper.release()
+    }
+
+    // 음성 인식 결과 파싱 및 입력 필드 설정
+    private fun parseAndFillIngredientFields(spokenText: String, nameEditText: EditText, quantityEditText: EditText, unitSpinner: Spinner) {
+        val regex = Regex("(.*?)\\s*(\\d+)(.*)") // 이름, 분량, 단위를 추출하는 정규식 (공백 없는 경우)
+        val matchResult = regex.find(spokenText)
+
+
+        if (matchResult != null) {
+            val (name, quantity, unit) = matchResult.destructured
+
+            nameEditText.setText(name.trim())
+            quantityEditText.setText(quantity.trim())
+
+            // 단위 설정 (Spinner에서 해당 단위를 찾아 선택)
+            val adapter = ingredientUnitSpinner.adapter as ArrayAdapter<String> // ArrayAdapter로 캐스팅
+            var unitFound = false
+            for (i in 0 until adapter.count) {
+                if (adapter.getItem(i) == unit.trim()) {
+                    ingredientUnitSpinner.setSelection(i)
+                    unitFound = true
+                    break
+                }
+            }
+
+            // 단위를 찾지 못한 경우 Spinner에 단위 추가
+            if (!unitFound) {
+                adapter.add(unit.trim())
+                ingredientUnitSpinner.setSelection(adapter.count - 1) // 새로 추가된 단위 선택
+            }
+        } else {
+            // 음성 인식 원본 텍스트를 포함한 오류 메시지 출력
+            val errorMessage = "음성 인식 결과를 파싱할 수 없습니다.\n원본 텍스트: $spokenText"
+            Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+        }
     }
 }
