@@ -16,14 +16,14 @@
         android:textColor="@android:color/black"
         android:textSize="24sp" />
 
-    <!-- 아이디 입력 필드 -->
+    <!-- 이메일 입력 필드 -->
     <EditText
-        android:id="@+id/editTextUsername"
+        android:id="@+id/editTextEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:hint="Username"
-        android:inputType="text"
+        android:layout_marginTop="50dp"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
         android:minHeight="48dp"
         android:padding="12dp" />
 
@@ -39,10 +39,17 @@
         android:padding="12dp" />
 
     <!-- 비밀번호 확인 입력 필드 -->
+    <EditText
+        android:id="@+id/editTextConfirmPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:hint="Confirm Password"
+        android:inputType="textPassword"
+        android:minHeight="48dp"
+        android:padding="12dp" />
 
     <!-- 회원가입 버튼 -->
-
-
     <Button
         android:id="@+id/registerButton"
         android:layout_width="match_parent"
@@ -51,6 +58,5 @@
         android:background="?android:attr/selectableItemBackground"
         android:text="Sign Up"
         android:textSize="18sp" />
-
 
 </LinearLayout>
