@@ -1,9 +1,7 @@
-package com.example.recipeviewer
+package com.example.recipeviewer.mainPage
 
 // WebViewActivity.kt
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.WebSettings
@@ -12,7 +10,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceError
 
 import android.widget.Toast
-
+import com.example.recipeviewer.R
 
 
 class WebViewActivity : AppCompatActivity() {

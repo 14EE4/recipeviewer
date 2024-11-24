@@ -1,4 +1,4 @@
-package com.example.recipeviewer
+package com.example.recipeviewer.login
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,6 +8,8 @@ import android.widget.Toast
 import com.example.recipeviewer.helpers.DatabaseHelper
 import android.widget.EditText
 import android.widget.TextView
+import com.example.recipeviewer.R
+import com.example.recipeviewer.mainPage.MainPageActivity
 
 class MainActivity : AppCompatActivity() {
 

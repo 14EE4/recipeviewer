@@ -1,10 +1,11 @@
-package com.example.recipeviewer
+package com.example.recipeviewer.mainPage
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.recipeviewer.R
 import com.example.recipeviewer.models.Recipe
 
 class RecipeAdapter(

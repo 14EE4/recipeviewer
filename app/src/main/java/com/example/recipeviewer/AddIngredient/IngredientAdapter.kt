@@ -1,4 +1,4 @@
-package com.example.recipeviewer
+package com.example.recipeviewer.AddIngredient
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -14,6 +14,7 @@ import com.example.recipeviewer.models.Ingredient
 import kotlin.text.toIntOrNull
 import com.example.recipeviewer.helpers.DatabaseHelper
 import android.widget.*
+import com.example.recipeviewer.R
 
 import java.util.Calendar
 

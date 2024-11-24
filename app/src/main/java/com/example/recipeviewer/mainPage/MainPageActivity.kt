@@ -1,4 +1,4 @@
-package com.example.recipeviewer
+package com.example.recipeviewer.mainPage
 
 import android.content.Intent
 import android.os.Bundle
@@ -14,6 +14,9 @@ import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.helpers.VoiceSearchHelper
 import com.example.recipeviewer.models.Recipe
 import android.util.Log
+import com.example.recipeviewer.AddIngredient.AddIngredientActivity
+import com.example.recipeviewer.login.MainActivity
+import com.example.recipeviewer.R
 
 class MainPageActivity : AppCompatActivity() {
 

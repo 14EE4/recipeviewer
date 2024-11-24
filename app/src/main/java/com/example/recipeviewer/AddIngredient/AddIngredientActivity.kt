@@ -1,13 +1,12 @@
-package com.example.recipeviewer
+package com.example.recipeviewer.AddIngredient
 
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.semantics.setSelection
-import androidx.compose.ui.semantics.setText
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.recipeviewer.R
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.models.Ingredient
 import com.example.recipeviewer.helpers.VoiceSearchHelper

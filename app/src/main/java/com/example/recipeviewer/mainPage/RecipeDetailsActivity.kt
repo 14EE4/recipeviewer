@@ -1,5 +1,5 @@
 // RecipeDetailsActivity.kt
-package com.example.recipeviewer
+package com.example.recipeviewer.mainPage
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.recipeviewer.R
-import com.example.recipeviewer.WebViewActivity
 
 class RecipeDetailsActivity : AppCompatActivity() {
 
