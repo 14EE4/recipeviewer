@@ -24,6 +24,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val DATABASE_NAME = "recipes.db" // 데이터베이스 이름
         private const val DATABASE_VERSION = 1 // 데이터베이스 버전
         private const val ASSET_DB_PATH = "databases/$DATABASE_NAME"
+
+        //제외 재료 테이블
+        private const val TABLE_EXCLUDED_INGREDIENTS = "excluded_ingredients"
+        private const val COLUMN_EXCLUDED_INGREDIENT_ID = "id"
+        private const val COLUMN_EXCLUDED_INGREDIENT_NAME = "name"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
@@ -52,6 +57,10 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             Log.d("DatabaseHelper", "데이터베이스가 이미 존재합니다.")
         }
 
+        // 데이터베이스가 존재하든 존재하지 않든 테이블을 생성합니다.
+        val db = writableDatabase
+        createTables(db)
+        db.close()
 
     }
 
@@ -88,6 +97,19 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         }
     }
 
+    private fun createTables(db: SQLiteDatabase) {
+
+
+        val createExcludedIngredientsTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_EXCLUDED_INGREDIENTS (
+                $COLUMN_EXCLUDED_INGREDIENT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_EXCLUDED_INGREDIENT_NAME TEXT NOT NULL UNIQUE
+            )
+        """
+        db.execSQL(createExcludedIngredientsTable)
+
+
+    }
 
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -223,5 +245,33 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }.addOnFailureListener { e ->
                 Log.e("DatabaseHelper", "Error deleting ingredient", e)
             }
+    }
+
+    fun addExcludedIngredient(name: String): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_EXCLUDED_INGREDIENT_NAME, name)
+        }
+        val result = db.insert(TABLE_EXCLUDED_INGREDIENTS, null, values)
+        db.close()
+        return result != -1L
+    }
+
+    // 제외 재료 목록 불러오기
+    fun getExcludedIngredients(): List<String> {
+        val excludedIngredientsList = mutableListOf<String>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_EXCLUDED_INGREDIENTS", null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXCLUDED_INGREDIENT_NAME))
+                excludedIngredientsList.add(name)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        // db.close() // SQLiteOpenHelper에서 관리하므로 직접 close() 호출 필요 없음
+        return excludedIngredientsList
     }
 }

@@ -17,7 +17,10 @@ import com.example.recipeviewer.models.Recipe
 import com.example.recipeviewer.AddIngredient.AddIngredientActivity
 import com.example.recipeviewer.login.MainActivity
 import com.example.recipeviewer.R
+import com.example.recipeviewer.ExcludedIngredients.ExcludedIngredientsActivity
 import com.google.firebase.auth.FirebaseAuth
+import kotlin.text.contains
+
 
 class MainPageActivity : AppCompatActivity() {
 
@@ -55,6 +58,11 @@ class MainPageActivity : AppCompatActivity() {
 
         // DatabaseHelper 초기화
         databaseHelper = DatabaseHelper(this)
+
+        findViewById<Button>(R.id.addExcludedIngredientButton).setOnClickListener {
+            val intent = Intent(this, ExcludedIngredientsActivity::class.java)
+            startActivity(intent)
+        }
 
         // 레시피 불러오기
         recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
@@ -204,7 +212,7 @@ class MainPageActivity : AppCompatActivity() {
                 // 제외 재료가 포함된 레시피는 commonIngredientsCount를 감소시켜 후순위로 보냄
                 val excludedIngredientsCount = recipeIngredients.count { recipeIngredient ->
                     excludedIngredientList.any { excludedIngredient ->
-                        recipeIngredient.contains(excludedIngredient.name, ignoreCase = true)
+                        recipeIngredient.contains(excludedIngredient, ignoreCase = true) // excludedIngredient를 직접 사용
                     }
                 }
                 val finalCount = commonIngredientsCount - excludedIngredientsCount
