@@ -18,7 +18,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-
 class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {

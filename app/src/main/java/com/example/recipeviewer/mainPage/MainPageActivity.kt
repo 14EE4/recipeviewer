@@ -90,6 +90,7 @@ class MainPageActivity : AppCompatActivity() {
             }
         })
 
+        // 재료 검색 버튼 설정
         findViewById<Button>(R.id.ingredientSearchButton).setOnClickListener {
             val userId = auth.currentUser?.uid
             if (userId != null) {
@@ -190,6 +191,8 @@ class MainPageActivity : AppCompatActivity() {
 
     private fun searchAndSortRecipesByIngredients(userId: String) {
         databaseHelper.readIngredients(userId) { ingredientList ->
+            val excludedIngredientList = databaseHelper.getExcludedIngredients() // SQLite에서 제외 재료 목록 가져오기
+
             val matchingRecipes = recipeList.map { recipe ->
                 val recipeIngredients = parseAllIngredients(recipe)
                 val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
@@ -198,10 +201,18 @@ class MainPageActivity : AppCompatActivity() {
                     }
                 }
 
-                // Logcat에 출력
-                Log.d("RecipeMatch", "Recipe '${recipe.title}' has $commonIngredientsCount matching ingredients.")
+                // 제외 재료가 포함된 레시피는 commonIngredientsCount를 감소시켜 후순위로 보냄
+                val excludedIngredientsCount = recipeIngredients.count { recipeIngredient ->
+                    excludedIngredientList.any { excludedIngredient ->
+                        recipeIngredient.contains(excludedIngredient.name, ignoreCase = true)
+                    }
+                }
+                val finalCount = commonIngredientsCount - excludedIngredientsCount
 
-                Pair(recipe, commonIngredientsCount)
+                // Logcat에 출력
+                Log.d("RecipeMatch", "Recipe '${recipe.title}' has $finalCount matching ingredients (excluded: $excludedIngredientsCount).")
+
+                Pair(recipe, finalCount)
             }.filter { it.second > 0 } // 일치하는 재료가 하나라도 있는 레시피만 필터링
                 .sortedByDescending { it.second } // 일치하는 개수가 많은 순서대로 정렬
 

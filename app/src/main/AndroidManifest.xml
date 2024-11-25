@@ -31,6 +31,9 @@
         <activity android:name=".mainPage.RecipeDetailsActivity" />
         <activity android:name=".mainPage.MainPageActivity" />
         <activity android:name=".AddIngredient.AddIngredientActivity" />
+        <activity
+            android:name=".ExcludedIngredients.ExcludedIngredientsActivity"
+            android:exported="false" />
 
     </application>
 </manifest>

@@ -47,7 +47,7 @@ class AddIngredientActivity : AppCompatActivity() {
         ingredientUnitSpinner = findViewById(R.id.spinnerIngredientUnit)
         val ingredientExpiryDateEditText: EditText = findViewById(R.id.editTextIngredientExpiryDate)
         val addButton: Button = findViewById(R.id.buttonAddIngredient)
-
+        val excludeButton: Button = findViewById(R.id.button4) // 제외 추가 버튼
         val clearButton: Button = findViewById(R.id.buttonClearIngredients)
 
         // Spinner에 사용할 데이터 리스트 생성
@@ -87,8 +87,6 @@ class AddIngredientActivity : AppCompatActivity() {
         // RecyclerView 초기화
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
-
 
         // 재료 불러오기
         databaseHelper.readIngredients(userId) { ingredients ->
