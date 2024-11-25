@@ -14,7 +14,9 @@ import com.example.recipeviewer.models.Ingredient
 import kotlin.text.toIntOrNull
 import com.example.recipeviewer.helpers.DatabaseHelper
 import android.widget.*
+import androidx.compose.ui.semantics.text
 import com.example.recipeviewer.R
+import com.google.firebase.auth.FirebaseAuth
 
 import java.util.Calendar
 
@@ -29,8 +31,12 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
         val deleteButton: Button = itemView.findViewById(R.id.deleteButton)
         private lateinit var databaseHelper: DatabaseHelper
         private val context: Context = itemView.context
+        private lateinit var auth: FirebaseAuth
+        private lateinit var userId: String
 
         init {
+            auth = FirebaseAuth.getInstance()
+            userId = auth.currentUser?.uid ?: ""
             databaseHelper = DatabaseHelper(context) // context를 사용하여 DatabaseHelper 초기화
             editButton.setOnClickListener {
                 val position = adapterPosition
@@ -90,25 +96,20 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
                         val newExpiryDate = expiryDateEditText.text.toString()
 
                         // 데이터베이스에서 재료 업데이트
-                        databaseHelper.updateIngredient(ingredient.id, newName, newQuantity, newUnit, newExpiryDate)
-
+                        databaseHelper.updateIngredient(userId, ingredient.id, newName, newQuantity, newUnit, newExpiryDate) // ingredient.id (Firestore 문서 ID) 전달
                         // 리스트에서 재료 업데이트 및 어댑터 알림
-                        val updatedIngredient = ingredient.copy(
-                            name = newName,
-                            quantity = newQuantity,
-                            unit = newUnit,
-                            expiryDate = newExpiryDate
-                        )
-                        ingredientList[position] = updatedIngredient
-                        notifyItemChanged(position)
+                        // 기존 Ingredient 객체를 수정합니다.
+                        ingredient.name = newName
+                        ingredient.quantity = newQuantity
+                        ingredient.unit = newUnit
+                        ingredient.expiryDate = newExpiryDate
+
+                        notifyItemChanged(position) // 변경된 항목만 업데이트
                     }
 
                     builder.setNegativeButton("취소", null)
 
                     builder.show()
-
-
-
                 }
             }
 
@@ -123,7 +124,7 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
 
                     builder.setPositiveButton("확인") { dialog, which ->
                         // 데이터베이스에서 삭제
-                        databaseHelper.deleteIngredient(ingredient.id)
+                        databaseHelper.deleteIngredient(userId, ingredient.id)
 
                         // RecyclerView 업데이트
                         ingredientList.removeAt(position)

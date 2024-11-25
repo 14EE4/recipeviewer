@@ -4,19 +4,20 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.util.Log
+import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.widget.Button
-import android.widget.Toast
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.helpers.VoiceSearchHelper
 import com.example.recipeviewer.models.Recipe
-import android.util.Log
 import com.example.recipeviewer.AddIngredient.AddIngredientActivity
 import com.example.recipeviewer.login.MainActivity
 import com.example.recipeviewer.R
+import com.google.firebase.auth.FirebaseAuth
 
 class MainPageActivity : AppCompatActivity() {
 
@@ -25,10 +26,18 @@ class MainPageActivity : AppCompatActivity() {
     private lateinit var recipeList: MutableList<Recipe>
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var voiceSearchHelper: VoiceSearchHelper
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // FirebaseAuth 인스턴스 초기화
+        auth = FirebaseAuth.getInstance()
+
+        // 현재 사용자 가져오기
+        val currentUser = auth.currentUser
+        val userId = currentUser?.uid
 
         // VoiceSearchHelper 초기화
         voiceSearchHelper = VoiceSearchHelper(this) { query ->
@@ -49,6 +58,9 @@ class MainPageActivity : AppCompatActivity() {
 
         // 레시피 불러오기
         recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
+
+        // 레시피 재료를 집합으로 변환하고 로그로 출력
+        //logRecipeIngredients()
 
         // 클릭 리스너와 함께 어댑터 초기화
         val recipes = databaseHelper.readAllData().toMutableList() // List를 MutableList로 변환
@@ -78,9 +90,13 @@ class MainPageActivity : AppCompatActivity() {
             }
         })
 
-        // 재료 검색 버튼 설정
         findViewById<Button>(R.id.ingredientSearchButton).setOnClickListener {
-            searchAndSortRecipesByIngredients()
+            val userId = auth.currentUser?.uid
+            if (userId != null) {
+                searchAndSortRecipesByIngredients(userId)
+            } else {
+                Toast.makeText(this, "사용자 ID를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // 모든 레시피 보기 버튼 설정
@@ -161,7 +177,7 @@ class MainPageActivity : AppCompatActivity() {
         val subIngredients = parseIngredients(recipe.subIngredients)
         val alternativeIngredients = parseIngredients(recipe.alternativeIngredients)
         val allIngredients = mainIngredients + subIngredients + alternativeIngredients
-        Log.d("MainPageActivity", "All Parsed Ingredients for Recipe '${recipe.title}': $allIngredients")
+        //Log.d("MainPageActivity", "All Parsed Ingredients for Recipe '${recipe.title}': $allIngredients")
         return allIngredients
     }
 
@@ -172,30 +188,44 @@ class MainPageActivity : AppCompatActivity() {
 
 
 
-    private fun searchAndSortRecipesByIngredients() {
-        val ingredientList = databaseHelper.getAllIngredients() // 모든 재료를 가져오는 함수
-        val matchingRecipes = recipeList.map { recipe ->
-            val recipeIngredients = parseAllIngredients(recipe)
-            val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
-                ingredientList.any { dbIngredient ->
-                    recipeIngredient.contains(dbIngredient.name, ignoreCase = true)
+    private fun searchAndSortRecipesByIngredients(userId: String) {
+        databaseHelper.readIngredients(userId) { ingredientList ->
+            val matchingRecipes = recipeList.map { recipe ->
+                val recipeIngredients = parseAllIngredients(recipe)
+                val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
+                    ingredientList.any { dbIngredient ->
+                        recipeIngredient.contains(dbIngredient.name, ignoreCase = true)
+                    }
                 }
+
+                // Logcat에 출력
+                Log.d("RecipeMatch", "Recipe '${recipe.title}' has $commonIngredientsCount matching ingredients.")
+
+                Pair(recipe, commonIngredientsCount)
+            }.filter { it.second > 0 } // 일치하는 재료가 하나라도 있는 레시피만 필터링
+                .sortedByDescending { it.second } // 일치하는 개수가 많은 순서대로 정렬
+
+            if (matchingRecipes.isEmpty()) {
+                Toast.makeText(this, "비슷한 재료가 있는 레시피가 없습니다.", Toast.LENGTH_SHORT).show()
+            } else {
+                val sortedRecipes = matchingRecipes.map { it.first }.toMutableList()
+                recipeAdapter.updateData(sortedRecipes)
+                Toast.makeText(this, "${sortedRecipes.size}개의 레시피가 검색되었습니다.", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
 
-            // Logcat에 출력
-            Log.d("RecipeMatch", "Recipe '${recipe.title}' has $commonIngredientsCount matching ingredients.")
+    private fun logRecipeIngredients() {
+        val allIngredientsSet = mutableSetOf<String>()
 
-            Pair(recipe, commonIngredientsCount)
-        }.filter { it.second > 0 } // 일치하는 재료가 하나라도 있는 레시피만 필터링
-            .sortedByDescending { it.second } // 일치하는 개수가 많은 순서대로 정렬
+        recipeList.forEach { recipe ->
+            val recipeIngredients = parseAllIngredients(recipe)
+            allIngredientsSet.addAll(recipeIngredients)
+        }
 
-        if (matchingRecipes.isEmpty()) {
-            Toast.makeText(this, "비슷한 재료가 있는 레시피가 없습니다.", Toast.LENGTH_SHORT).show()
-        } else {
-
-            val sortedRecipes = matchingRecipes.map { it.first }.toMutableList()
-            recipeAdapter.updateData(sortedRecipes)
-            Toast.makeText(this, "${sortedRecipes.size}개의 레시피가 검색되었습니다.", Toast.LENGTH_SHORT).show()
+        // 집합의 모든 재료를 로그로 출력
+        allIngredientsSet.forEach { ingredient ->
+            Log.d("AllIngredientsSet", ingredient)
         }
     }
 

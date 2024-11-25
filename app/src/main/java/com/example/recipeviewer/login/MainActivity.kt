@@ -20,6 +20,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loginButton: Button
     private lateinit var createAccountButton: Button
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -28,6 +30,7 @@ class MainActivity : AppCompatActivity() {
 
         // Firebase 초기화
         auth = FirebaseAuth.getInstance()
+
 
         // XML에 정의된 뷰 참조
         val loginTitle: TextView = findViewById(R.id.textView)
@@ -56,7 +59,10 @@ class MainActivity : AppCompatActivity() {
             // 회원가입 화면으로 이동
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+
     }
+
+
 
     // 로그인 처리 함수
     private fun loginUser(email: String, password: String) {
@@ -71,4 +77,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
+
+
 }

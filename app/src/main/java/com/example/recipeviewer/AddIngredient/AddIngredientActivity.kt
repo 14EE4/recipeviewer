@@ -3,6 +3,7 @@ package com.example.recipeviewer.AddIngredient
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.widget.*
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -11,6 +12,8 @@ import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.models.Ingredient
 import com.example.recipeviewer.helpers.VoiceSearchHelper
 import java.util.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
 
 class AddIngredientActivity : AppCompatActivity() {
 
@@ -18,19 +21,25 @@ class AddIngredientActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var ingredientAdapter: IngredientAdapter
     private lateinit var ingredientList: MutableList<Ingredient>
-    private lateinit var excludedIngredientList: MutableList<Ingredient> // 제외된 재료 목록
-    private lateinit var excludedRecyclerView: RecyclerView // 제외 재료 목록을 위한 RecyclerView
-    private lateinit var excludedAdapter: IngredientAdapter // 제외 재료용 어댑터
+
     private lateinit var voiceSearchHelper: VoiceSearchHelper // 음성인식
     private lateinit var ingredientNameEditText: EditText
     private lateinit var ingredientQuantityEditText: EditText
     private lateinit var ingredientUnitSpinner: Spinner
+    private lateinit var auth: FirebaseAuth
+    private lateinit var userId: String
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_ingredient)
 
+        auth = FirebaseAuth.getInstance()
+        userId = auth.currentUser?.uid ?: ""
         databaseHelper = DatabaseHelper(this)
+
+        // ingredientList 초기화
+        ingredientList = mutableListOf()
 
         // 뷰 초기화
         ingredientNameEditText = findViewById(R.id.editTextIngredientName)
@@ -38,7 +47,7 @@ class AddIngredientActivity : AppCompatActivity() {
         ingredientUnitSpinner = findViewById(R.id.spinnerIngredientUnit)
         val ingredientExpiryDateEditText: EditText = findViewById(R.id.editTextIngredientExpiryDate)
         val addButton: Button = findViewById(R.id.buttonAddIngredient)
-        val excludeButton: Button = findViewById(R.id.button4) // 제외 추가 버튼
+
         val clearButton: Button = findViewById(R.id.buttonClearIngredients)
 
         // Spinner에 사용할 데이터 리스트 생성
@@ -79,21 +88,22 @@ class AddIngredientActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // 제외 재료 목록 RecyclerView 초기화
-        excludedRecyclerView = findViewById(R.id.recyclerViewExcluded)
-        excludedRecyclerView.layoutManager = LinearLayoutManager(this)
+
 
         // 재료 불러오기
-        ingredientList = databaseHelper.readIngredients().toMutableList()
-        excludedIngredientList = mutableListOf() // 제외된 재료 초기화
+        databaseHelper.readIngredients(userId) { ingredients ->
+            ingredientList = ingredients.toMutableList()
+            ingredientAdapter = IngredientAdapter(ingredientList, this)
+            recyclerView.adapter = ingredientAdapter
+        }
 
         // IngredientAdapter 초기화 및 클릭 리스너 설정
         ingredientAdapter = IngredientAdapter(ingredientList, this)
 
-        excludedAdapter = IngredientAdapter(excludedIngredientList, this) // 제외된 재료 어댑터
+
 
         recyclerView.adapter = ingredientAdapter
-        excludedRecyclerView.adapter = excludedAdapter // 제외된 재료 목록 어댑터 설정
+
 
 
         addButton.setOnClickListener {
@@ -103,67 +113,65 @@ class AddIngredientActivity : AppCompatActivity() {
             val ingredientExpiryDate = ingredientExpiryDateEditText.text.toString()
 
             if (ingredientName.isNotEmpty() && ingredientUnit.isNotEmpty() && ingredientExpiryDate.isNotEmpty()) {
-                // 재료를 데이터베이스에 추가
-                val success = databaseHelper.addIngredient(ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
-                if (success) {
-                    Toast.makeText(this, "재료가 추가되었습니다.", Toast.LENGTH_SHORT).show()
+                // Firestore에 데이터 추가 시도 로그
+                Log.d("AddIngredientActivity", "Attempting to add ingredient to Firestore")
 
-                    // 새 재료 추가
-                    val newIngredient = Ingredient(0, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
-                    ingredientList.add(newIngredient)
+                // 재료를 Firestore에 추가
+                databaseHelper.addIngredient(userId, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
+                    .addOnSuccessListener { documentReference ->
+                        // Firestore에 데이터 추가 성공 로그
+                        Log.d("AddIngredientActivity", "Ingredient added to Firestore with ID: ${documentReference.id}")
 
-                    // RecyclerView 업데이트
-                    val position = ingredientList.size - 1
-                    ingredientAdapter.notifyItemInserted(position)
+                        Toast.makeText(this, "재료가 추가되었습니다.", Toast.LENGTH_SHORT).show()
 
-                    // RecyclerView 자동 스크롤
-                    recyclerView.scrollToPosition(position)
+                        // 새 재료 추가
+                        val newIngredient = Ingredient(
+                            id = documentReference.id,
+                            name = ingredientName,
+                            quantity = ingredientQuantity,
+                            unit = ingredientUnit,
+                            expiryDate = ingredientExpiryDate
+                        )
 
-                    // 입력 필드 초기화
-                    ingredientNameEditText.text.clear()
-                    ingredientQuantityEditText.text.clear()
-                    ingredientUnitSpinner.setSelection(0)
-                    ingredientExpiryDateEditText.text.clear()
-                } else {
-                    Toast.makeText(this, "재료 추가에 실패했습니다.", Toast.LENGTH_SHORT).show()
-                }
+                        // 재료 리스트에 추가 시도 로그
+                        Log.d("AddIngredientActivity", "Attempting to add ingredient to list")
+
+                        ingredientList.add(newIngredient)
+
+                        // 리스트에 추가된 후 크기 로그
+                        Log.d("AddIngredientActivity", "Ingredient list size after addition: ${ingredientList.size}")
+
+                        // UI 스레드에서 RecyclerView 업데이트
+                        runOnUiThread {
+                            ingredientAdapter.notifyItemInserted(ingredientList.size - 1)
+                            recyclerView.scrollToPosition(ingredientList.size - 1)
+
+                            // 입력 필드 초기화
+                            ingredientNameEditText.text.clear()
+                            ingredientQuantityEditText.text.clear()
+                            ingredientUnitSpinner.setSelection(0)
+                            ingredientExpiryDateEditText.text.clear()
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        // Firestore에 데이터 추가 실패 로그
+                        Log.e("AddIngredientActivity", "Failed to add ingredient to Firestore", e)
+                        Toast.makeText(this, "재료 추가에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                    }
             } else {
                 Toast.makeText(this, "모든 필드를 입력하세요.", Toast.LENGTH_SHORT).show()
             }
         }
 
-        excludeButton.setOnClickListener {
-            val ingredientName = ingredientNameEditText.text.toString()
-            val ingredientQuantity = ingredientQuantityEditText.text.toString().toIntOrNull() ?: 0
-            val ingredientUnit = ingredientUnitSpinner.selectedItem.toString()
-            val ingredientExpiryDate = ingredientExpiryDateEditText.text.toString()
-
-            if (ingredientName.isNotEmpty() && ingredientUnit.isNotEmpty() && ingredientExpiryDate.isNotEmpty()) {
-                // 제외 재료 목록에 추가
-                val excludedIngredient = Ingredient(0, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
-                excludedIngredientList.add(excludedIngredient)
-                excludedAdapter.updateData(excludedIngredientList)
-                Toast.makeText(this, "재료가 제외 목록에 추가되었습니다.", Toast.LENGTH_SHORT).show()
-
-                // 입력 필드 초기화
-                ingredientNameEditText.text.clear()
-                ingredientQuantityEditText.text.clear()
-                ingredientUnitSpinner.setSelection(0)
-                ingredientExpiryDateEditText.text.clear()
-            } else {
-                Toast.makeText(this, "모든 필드를 입력하세요.", Toast.LENGTH_SHORT).show()
-            }
-        }
 
         clearButton.setOnClickListener {
             // 재료 목록 초기화
-            databaseHelper.clearIngredients()
+            databaseHelper.clearIngredients(userId)
             Toast.makeText(this, "재료 목록이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
             // 재료 목록 업데이트
             ingredientList.clear()
             ingredientAdapter.updateData(ingredientList)
-            excludedIngredientList.clear()
-            excludedAdapter.updateData(excludedIngredientList)
+
         }
     }
 
@@ -171,10 +179,11 @@ class AddIngredientActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 재료 목록을 데이터베이스에서 다시 불러오기
-        ingredientList = databaseHelper.readIngredients().toMutableList()
-        ingredientAdapter.updateData(ingredientList)
-
+        // 재료 목록을 Firestore에서 다시 불러오기
+        databaseHelper.readIngredients(userId) { ingredients ->
+            ingredientList = ingredients.toMutableList()
+            ingredientAdapter.updateData(ingredientList)
+        }
     }
 
     // 권한 요청 결과 처리

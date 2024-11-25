@@ -6,11 +6,18 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import android.widget.Toast
 import com.example.recipeviewer.models.Ingredient
 import com.example.recipeviewer.models.Recipe
+import com.google.android.gms.tasks.Task
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+
 
 class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -18,23 +25,13 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val DATABASE_NAME = "recipes.db" // 데이터베이스 이름
         private const val DATABASE_VERSION = 1 // 데이터베이스 버전
         private const val ASSET_DB_PATH = "databases/$DATABASE_NAME"
-
-        // Users Table
-        private const val TABLE_USERS = "users"
-        private const val COLUMN_USER_ID = "id"
-        private const val COLUMN_EMAIL = "email"
-        private const val COLUMN_PASSWORD = "password"
-
-        // Ingredients Table
-        private const val TABLE_INGREDIENTS = "ingredients"
-        private const val COLUMN_INGREDIENT_ID = "id"
-        private const val COLUMN_INGREDIENT_NAME = "name"
-        private const val COLUMN_INGREDIENT_QUANTITY = "quantity"
-        private const val COLUMN_INGREDIENT_UNIT = "unit"
-        private const val COLUMN_INGREDIENT_EXPIRY_DATE = "expiry_date"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val userId: String = auth.currentUser?.uid ?: ""
 
     init {
         createDatabase()
@@ -56,10 +53,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             Log.d("DatabaseHelper", "데이터베이스가 이미 존재합니다.")
         }
 
-        // 데이터베이스가 존재하든 존재하지 않든 테이블을 생성합니다.
-        val db = writableDatabase
-        createTables(db)
-        db.close()
+
     }
 
     private fun checkDatabaseExists(): Boolean {
@@ -95,27 +89,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         }
     }
 
-    private fun createTables(db: SQLiteDatabase) {
-        val createUsersTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_USERS (
-                $COLUMN_USER_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COLUMN_EMAIL TEXT NOT NULL UNIQUE,
-                $COLUMN_PASSWORD TEXT NOT NULL
-            )
-        """
-        db.execSQL(createUsersTable)
 
-        val createIngredientsTable = """
-        CREATE TABLE IF NOT EXISTS $TABLE_INGREDIENTS (
-            $COLUMN_INGREDIENT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            $COLUMN_INGREDIENT_NAME TEXT NOT NULL,
-            $COLUMN_INGREDIENT_QUANTITY INTEGER NOT NULL,
-            $COLUMN_INGREDIENT_UNIT TEXT NOT NULL,
-            $COLUMN_INGREDIENT_EXPIRY_DATE TEXT NOT NULL
-        )
-    """
-        db.execSQL(createIngredientsTable)
-    }
 
     override fun onCreate(db: SQLiteDatabase?) {
         // onCreate 메서드는 비워둡니다.
@@ -174,110 +148,81 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return recipeList
     }
 
-    // 회원가입 기능
-    fun registerUser(email: String, password: String): Boolean {
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_EMAIL, email)
-            put(COLUMN_PASSWORD, password)
-        }
-        val result = db.insert(TABLE_USERS, null, values)
-        db.close()
-        return result != -1L
+
+
+    fun addIngredient(
+        userId: String,
+        name: String,
+        quantity: Int,
+        unit: String,
+        expiryDate: String
+    ): Task<DocumentReference> {
+        val ingredient = hashMapOf(
+            "name" to name,
+            "quantity" to quantity,
+            "unit" to unit,
+            "expiryDate" to expiryDate
+        )
+        return firestore.collection("users").document(userId).collection("ingredients").add(ingredient)
     }
 
-    // 로그인 기능
-    fun authenticateUser(email: String, password: String): Boolean {
-        val db = readableDatabase
-        val query = "SELECT * FROM $TABLE_USERS WHERE $COLUMN_EMAIL = ? AND $COLUMN_PASSWORD = ?"
-        val cursor = db.rawQuery(query, arrayOf(email, password))
-        val isAuthenticated = cursor.count > 0
-        cursor.close()
-        db.close()
-        return isAuthenticated
+    // 재료 수정
+    fun updateIngredient(userId: String, documentId: String, name: String, quantity: Int, unit: String, expiryDate: String): Task<Void> {
+        val ingredient = hashMapOf(
+            "name" to name,
+            "quantity" to quantity,
+            "unit" to unit,
+            "expiryDate" to expiryDate
+        )
+        return firestore.collection("users").document(userId).collection("ingredients").document(documentId).set(ingredient) // documentId 사용
+            .addOnSuccessListener {
+                Log.d("DatabaseHelper", "Ingredient updated with ID: $documentId")
+            }.addOnFailureListener { e ->
+                Log.e("DatabaseHelper", "Error updating ingredient", e)
+            }
     }
 
-    // 재료 추가 기능
-    fun addIngredient(name: String, quantity: Int, unit: String, expiryDate: String): Boolean {
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_INGREDIENT_NAME, name)
-            put(COLUMN_INGREDIENT_QUANTITY, quantity)
-            put(COLUMN_INGREDIENT_UNIT, unit)
-            put(COLUMN_INGREDIENT_EXPIRY_DATE, expiryDate)
+
+    // 재료 목록 초기화
+    fun clearIngredients(userId: String): Task<QuerySnapshot> {
+        return firestore.collection("users").document(userId).collection("ingredients").get().addOnSuccessListener { result ->
+            for (document in result) {
+                firestore.collection("users").document(userId).collection("ingredients").document(document.id).delete()
+            }
+            Log.d("DatabaseHelper", "All ingredients cleared")
+        }.addOnFailureListener { e ->
+            Log.e("DatabaseHelper", "Error clearing ingredients", e)
         }
-        val result = db.insert(TABLE_INGREDIENTS, null, values)
-        db.close()
-        return result != -1L
     }
-    //수정
-    fun updateIngredient(id: Int, name: String, quantity: Int, unit: String, expiryDate: String) {
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_INGREDIENT_NAME, name)
-            put(COLUMN_INGREDIENT_QUANTITY, quantity)
-            put(COLUMN_INGREDIENT_UNIT, unit)
-            put(COLUMN_INGREDIENT_EXPIRY_DATE, expiryDate)
-        }
-        db.update(TABLE_INGREDIENTS, values, "$COLUMN_INGREDIENT_ID = ?", arrayOf(id.toString()))
-    }
-    //삭제
-    fun deleteIngredient(id: Int) {
-        val db = writableDatabase
-        db.delete(TABLE_INGREDIENTS, "$COLUMN_INGREDIENT_ID = ?", arrayOf(id.toString()))
-    }
-    // 재료 목록 초기화 기능
-    fun clearIngredients() {
-        val db = writableDatabase
-        db.delete(TABLE_INGREDIENTS, null, null)
-        db.close()
-    }
+
     // 재료 목록 읽기
-    fun readIngredients(): List<Ingredient> {
-        val db = readableDatabase
-        val cursor: Cursor = db.rawQuery("SELECT * FROM $TABLE_INGREDIENTS", null)
-        val ingredients = mutableListOf<Ingredient>()
-
-        if (cursor.moveToFirst()) {
-            do {
+    fun readIngredients(userId: String, callback: (List<Ingredient>) -> Unit) {
+        firestore.collection("users").document(userId).collection("ingredients").get().addOnSuccessListener { result ->
+            val ingredients = mutableListOf<Ingredient>()
+            for (document in result) {
                 val ingredient = Ingredient(
-                    id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_ID)),
-                    name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_NAME)),
-                    quantity = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_QUANTITY)),
-                    unit = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_UNIT)),
-                    expiryDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_INGREDIENT_EXPIRY_DATE))
+                    id = document.id, // Firestore 문서 ID를 직접 사용
+                    name = document.getString("name") ?: "",
+                    quantity = document.getLong("quantity")?.toInt() ?: 0,
+                    unit = document.getString("unit") ?: "",
+                    expiryDate = document.getString("expiryDate") ?: ""
                 )
                 ingredients.add(ingredient)
-            } while (cursor.moveToNext())
+            }
+            callback(ingredients)
+            Log.d("DatabaseHelper", "Ingredients: $ingredients")
+        }.addOnFailureListener { e ->
+            Log.e("DatabaseHelper", "Error getting ingredients", e)
         }
-
-        cursor.close()
-        return ingredients
     }
 
-    fun getAllIngredients(): MutableList<Ingredient> {
-        val ingredientList = mutableListOf<Ingredient>()
-        val db = readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_INGREDIENTS", null)
-
-        if (cursor.moveToFirst()) {
-            do {
-                val id = cursor.getInt(cursor.getColumnIndex(COLUMN_INGREDIENT_ID))
-                val name = cursor.getString(cursor.getColumnIndex(COLUMN_INGREDIENT_NAME))
-                val quantity = cursor.getInt(cursor.getColumnIndex(COLUMN_INGREDIENT_QUANTITY))
-                val unit = cursor.getString(cursor.getColumnIndex(COLUMN_INGREDIENT_UNIT))
-                val expiryDate = cursor.getString(cursor.getColumnIndex(COLUMN_INGREDIENT_EXPIRY_DATE))
-
-                val ingredient = Ingredient(id, name, quantity, unit, expiryDate)
-                ingredientList.add(ingredient)
-
-                // 재료 로그 출력
-                Log.d("DatabaseHelper", "Ingredient: $ingredient")
-            } while (cursor.moveToNext())
-        }
-        cursor.close()
-        db.close()
-        return ingredientList
+    // 재료 삭제
+    fun deleteIngredient(userId: String, documentId: String): Task<Void> { // documentId 매개변수 사용
+        return firestore.collection("users").document(userId).collection("ingredients").document(documentId).delete() // documentId 사용
+            .addOnSuccessListener {
+                Log.d("DatabaseHelper", "Ingredient deleted with ID: $documentId")
+            }.addOnFailureListener { e ->
+                Log.e("DatabaseHelper", "Error deleting ingredient", e)
+            }
     }
-
 }
