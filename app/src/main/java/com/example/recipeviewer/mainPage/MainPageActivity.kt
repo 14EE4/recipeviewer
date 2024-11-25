@@ -17,6 +17,7 @@ import android.util.Log
 import com.example.recipeviewer.AddIngredient.AddIngredientActivity
 import com.example.recipeviewer.login.MainActivity
 import com.example.recipeviewer.R
+import com.example.recipeviewer.ExcludedIngredients.ExcludedIngredientsActivity
 
 class MainPageActivity : AppCompatActivity() {
 
@@ -46,6 +47,12 @@ class MainPageActivity : AppCompatActivity() {
 
         // DatabaseHelper 초기화
         databaseHelper = DatabaseHelper(this)
+
+        findViewById<Button>(R.id.addExcludedIngredientButton).setOnClickListener {
+            val intent = Intent(this, ExcludedIngredientsActivity::class.java)
+            startActivity(intent)
+        }
+
 
         // 레시피 불러오기
         recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
@@ -174,6 +181,8 @@ class MainPageActivity : AppCompatActivity() {
 
     private fun searchAndSortRecipesByIngredients() {
         val ingredientList = databaseHelper.getAllIngredients() // 모든 재료를 가져오는 함수
+        val excludedIngredientList = databaseHelper.getExcludedIngredients() // 제외 재료 목록 가져오기
+
         val matchingRecipes = recipeList.map { recipe ->
             val recipeIngredients = parseAllIngredients(recipe)
             val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
@@ -182,21 +191,30 @@ class MainPageActivity : AppCompatActivity() {
                 }
             }
 
-            // Logcat에 출력
-            Log.d("RecipeMatch", "Recipe '${recipe.title}' has $commonIngredientsCount matching ingredients.")
+            // 제외 재료가 포함된 레시피는 commonIngredientsCount를 감소시켜 후순위로 보냄
+            val excludedIngredientsCount = recipeIngredients.count { recipeIngredient ->
+                excludedIngredientList.any { excludedIngredient ->
+                    recipeIngredient.contains(excludedIngredient, ignoreCase = true)
+                }
+            }
+            val finalCount = commonIngredientsCount - excludedIngredientsCount // 제외 재료 개수만큼 감소
 
-            Pair(recipe, commonIngredientsCount)
+            // Logcat에 출력
+            Log.d("RecipeMatch", "Recipe '${recipe.title}' has $finalCount matching ingredients (excluded: $excludedIngredientsCount).")
+
+            Pair(recipe, finalCount)
         }.filter { it.second > 0 } // 일치하는 재료가 하나라도 있는 레시피만 필터링
             .sortedByDescending { it.second } // 일치하는 개수가 많은 순서대로 정렬
 
         if (matchingRecipes.isEmpty()) {
             Toast.makeText(this, "비슷한 재료가 있는 레시피가 없습니다.", Toast.LENGTH_SHORT).show()
         } else {
-
             val sortedRecipes = matchingRecipes.map { it.first }.toMutableList()
             recipeAdapter.updateData(sortedRecipes)
             Toast.makeText(this, "${sortedRecipes.size}개의 레시피가 검색되었습니다.", Toast.LENGTH_SHORT).show()
         }
     }
+
+
 
 }

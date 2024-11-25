@@ -14,6 +14,7 @@ import java.io.IOException
 
 class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
+
     companion object {
         private const val DATABASE_NAME = "recipes.db" // 데이터베이스 이름
         private const val DATABASE_VERSION = 1 // 데이터베이스 버전
@@ -24,6 +25,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val COLUMN_USER_ID = "id"
         private const val COLUMN_EMAIL = "email"
         private const val COLUMN_PASSWORD = "password"
+
+        private const val TABLE_EXCLUDED_INGREDIENTS = "excluded_ingredients"
+        private const val COLUMN_EXCLUDED_INGREDIENT_ID = "id"
+        private const val COLUMN_EXCLUDED_INGREDIENT_NAME = "name"
+
 
         // Ingredients Table
         private const val TABLE_INGREDIENTS = "ingredients"
@@ -69,6 +75,8 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return exists
     }
 
+
+
     private fun copyDatabase() {
         val dbPath = context.getDatabasePath(DATABASE_NAME).absolutePath
 
@@ -104,6 +112,14 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             )
         """
         db.execSQL(createUsersTable)
+
+        val createExcludedIngredientsTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_EXCLUDED_INGREDIENTS (
+                $COLUMN_EXCLUDED_INGREDIENT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_EXCLUDED_INGREDIENT_NAME TEXT NOT NULL UNIQUE
+            )
+        """
+        db.execSQL(createExcludedIngredientsTable)
 
         val createIngredientsTable = """
         CREATE TABLE IF NOT EXISTS $TABLE_INGREDIENTS (
@@ -172,6 +188,34 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
 
         cursor.close()
         return recipeList
+    }
+
+    fun addExcludedIngredient(name: String): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_EXCLUDED_INGREDIENT_NAME, name)
+        }
+        val result = db.insert(TABLE_EXCLUDED_INGREDIENTS, null, values)
+        db.close()
+        return result != -1L
+    }
+
+    // 제외 재료 목록 불러오기
+    fun getExcludedIngredients(): List<String> {
+        val excludedIngredientsList = mutableListOf<String>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_EXCLUDED_INGREDIENTS", null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val name = cursor.getString(cursor.getColumnIndex(COLUMN_EXCLUDED_INGREDIENT_NAME))
+                excludedIngredientsList.add(name)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        db.close()
+        return excludedIngredientsList
     }
 
     // 회원가입 기능

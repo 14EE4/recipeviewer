@@ -18,9 +18,8 @@ class AddIngredientActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var ingredientAdapter: IngredientAdapter
     private lateinit var ingredientList: MutableList<Ingredient>
-    private lateinit var excludedIngredientList: MutableList<Ingredient> // 제외된 재료 목록
-    private lateinit var excludedRecyclerView: RecyclerView // 제외 재료 목록을 위한 RecyclerView
-    private lateinit var excludedAdapter: IngredientAdapter // 제외 재료용 어댑터
+
+
     private lateinit var voiceSearchHelper: VoiceSearchHelper // 음성인식
     private lateinit var ingredientNameEditText: EditText
     private lateinit var ingredientQuantityEditText: EditText
@@ -38,8 +37,10 @@ class AddIngredientActivity : AppCompatActivity() {
         ingredientUnitSpinner = findViewById(R.id.spinnerIngredientUnit)
         val ingredientExpiryDateEditText: EditText = findViewById(R.id.editTextIngredientExpiryDate)
         val addButton: Button = findViewById(R.id.buttonAddIngredient)
-        val excludeButton: Button = findViewById(R.id.button4) // 제외 추가 버튼
+
         val clearButton: Button = findViewById(R.id.buttonClearIngredients)
+
+
 
         // Spinner에 사용할 데이터 리스트 생성
         val unitList = mutableListOf<String>()
@@ -79,21 +80,19 @@ class AddIngredientActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // 제외 재료 목록 RecyclerView 초기화
-        excludedRecyclerView = findViewById(R.id.recyclerViewExcluded)
-        excludedRecyclerView.layoutManager = LinearLayoutManager(this)
+
 
         // 재료 불러오기
         ingredientList = databaseHelper.readIngredients().toMutableList()
-        excludedIngredientList = mutableListOf() // 제외된 재료 초기화
+
 
         // IngredientAdapter 초기화 및 클릭 리스너 설정
         ingredientAdapter = IngredientAdapter(ingredientList, this)
 
-        excludedAdapter = IngredientAdapter(excludedIngredientList, this) // 제외된 재료 어댑터
+
 
         recyclerView.adapter = ingredientAdapter
-        excludedRecyclerView.adapter = excludedAdapter // 제외된 재료 목록 어댑터 설정
+
 
 
         addButton.setOnClickListener {
@@ -132,28 +131,7 @@ class AddIngredientActivity : AppCompatActivity() {
             }
         }
 
-        excludeButton.setOnClickListener {
-            val ingredientName = ingredientNameEditText.text.toString()
-            val ingredientQuantity = ingredientQuantityEditText.text.toString().toIntOrNull() ?: 0
-            val ingredientUnit = ingredientUnitSpinner.selectedItem.toString()
-            val ingredientExpiryDate = ingredientExpiryDateEditText.text.toString()
 
-            if (ingredientName.isNotEmpty() && ingredientUnit.isNotEmpty() && ingredientExpiryDate.isNotEmpty()) {
-                // 제외 재료 목록에 추가
-                val excludedIngredient = Ingredient(0, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
-                excludedIngredientList.add(excludedIngredient)
-                excludedAdapter.updateData(excludedIngredientList)
-                Toast.makeText(this, "재료가 제외 목록에 추가되었습니다.", Toast.LENGTH_SHORT).show()
-
-                // 입력 필드 초기화
-                ingredientNameEditText.text.clear()
-                ingredientQuantityEditText.text.clear()
-                ingredientUnitSpinner.setSelection(0)
-                ingredientExpiryDateEditText.text.clear()
-            } else {
-                Toast.makeText(this, "모든 필드를 입력하세요.", Toast.LENGTH_SHORT).show()
-            }
-        }
 
         clearButton.setOnClickListener {
             // 재료 목록 초기화
@@ -162,8 +140,7 @@ class AddIngredientActivity : AppCompatActivity() {
             // 재료 목록 업데이트
             ingredientList.clear()
             ingredientAdapter.updateData(ingredientList)
-            excludedIngredientList.clear()
-            excludedAdapter.updateData(excludedIngredientList)
+
         }
     }
 
