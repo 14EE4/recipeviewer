@@ -274,4 +274,20 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         // db.close() // SQLiteOpenHelper에서 관리하므로 직접 close() 호출 필요 없음
         return excludedIngredientsList
     }
+
+    fun deleteExcludedIngredient(userId: String, ingredient: String): Boolean {
+        val db = writableDatabase
+        try {
+            db.beginTransaction()
+            val whereClause = "$COLUMN_EXCLUDED_INGREDIENT_NAME = ?"
+            val whereArgs = arrayOf(ingredient)
+            val result = db.delete(TABLE_EXCLUDED_INGREDIENTS, whereClause, whereArgs)
+            db.setTransactionSuccessful()
+            // 데이터베이스를 닫기 전에 삭제 결과를 반환합니다.
+            return result > 0
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
+    }
 }
