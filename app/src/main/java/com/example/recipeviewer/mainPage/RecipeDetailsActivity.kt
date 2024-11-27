@@ -73,19 +73,8 @@ class RecipeDetailsActivity : AppCompatActivity() {
         val recipeIngredients = IngredientHelper.parseAllIngredients(recipe) // recipe는 Intent에서 전달된 레시피 객체
 
 
-        /*
         // 표 생성 및 데이터 채우기
-        val ingredientTable: TableLayout = findViewById(R.id.ingredientTable)
-
-        // 주재료, 부재료, 대체재료를 위한 TableLayout 생성 및 ingredientTable에 추가
-        val mainIngredientTable = createIngredientTable("주재료")
-        ingredientTable.addView(mainIngredientTable) // ingredientTable에 추가
-
-        val subIngredientTable = createIngredientTable("부재료")
-        ingredientTable.addView(subIngredientTable) // ingredientTable에 추가
-
-        val alternativeIngredientTable = createIngredientTable("대체재료")
-        ingredientTable.addView(alternativeIngredientTable) // ingredientTable에 추가
+        val ingredientTable: LinearLayout = findViewById(R.id.ingredientTable) // LinearLayout으로 변경
 
         databaseHelper.readIngredients(userId) { userIngredients: List<Ingredient> ->
             // 레시피 재료 가져오기 (콜백 내부로 이동)
@@ -93,39 +82,11 @@ class RecipeDetailsActivity : AppCompatActivity() {
             val subIngredients = IngredientHelper.parseIngredients(recipe.subIngredients, extractName = false)
             val alternativeIngredients = IngredientHelper.parseIngredients(recipe.alternativeIngredients, extractName = false)
 
-            // 각 테이블에 재료 추가
-            addIngredientsToTable(mainIngredientTable, mainIngredients, userIngredients)
-            addIngredientsToTable(subIngredientTable, subIngredients, userIngredients)
-            addIngredientsToTable(alternativeIngredientTable, alternativeIngredients, userIngredients)
+            // 각 테이블 생성 및 추가
+            ingredientTable.addView(createIngredientTable("주재료", mainIngredients, userIngredients))
+            ingredientTable.addView(createIngredientTable("부재료", subIngredients, userIngredients))
+            ingredientTable.addView(createIngredientTable("대체재료", alternativeIngredients, userIngredients))
         }
-
-        // 테이블 사이 간격 추가 (예: 16dp)
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-            setMargins(0, 0, 0, 16) // bottom margin 설정
-        }
-
-        mainIngredientTable.layoutParams = params
-        subIngredientTable.layoutParams = params
-        alternativeIngredientTable.layoutParams = params
-
-        // ingredientTable에 테이블 추가
-        ingredientTable.addView(mainIngredientTable)
-        ingredientTable.addView(subIngredientTable)
-        ingredientTable.addView(alternativeIngredientTable)
-        */
-
-
-
-
-
-
-
-
-
-
 
         // URL 열기 버튼을 설정
         findViewById<Button>(R.id.openUrlButton).setOnClickListener {
@@ -136,13 +97,22 @@ class RecipeDetailsActivity : AppCompatActivity() {
         }
     }
 
-    // 테이블 생성 함수
-    private fun createIngredientTable(title: String): TableLayout {
+
+
+
+    // 테이블 생성 함수 (수정)
+    private fun createIngredientTable(
+        title: String,
+        recipeIngredients: List<String>,
+        userIngredients: List<Ingredient>
+    ): TableLayout {
         val tableLayout = TableLayout(this)
-        tableLayout.layoutParams = TableLayout.LayoutParams(
-            TableLayout.LayoutParams.MATCH_PARENT,
-            TableLayout.LayoutParams.WRAP_CONTENT
-        )
+        tableLayout.layoutParams = LinearLayout.LayoutParams( // LinearLayout.LayoutParams으로 변경
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            setMargins(0, 0, 0, 16) // bottom margin 설정
+        }
         tableLayout.setBackgroundResource(R.drawable.table_border) // 테이블 테두리 설정
 
         // 테이블 제목 추가
@@ -155,31 +125,28 @@ class RecipeDetailsActivity : AppCompatActivity() {
         titleRow.addView(titleTextView)
         tableLayout.addView(titleRow) // titleRow를 tableLayout에 추가
 
+        // 재료 추가
+        addIngredientsToTable(tableLayout, recipeIngredients, userIngredients)
+
         return tableLayout
     }
 
-
-    // 테이블에 재료 추가 함수
+    // 테이블에 재료 추가 함수 (수정)
+    // addIngredientsToTable 함수 수정
     private fun addIngredientsToTable(
         tableLayout: TableLayout,
         recipeIngredients: List<String>,
         userIngredients: List<Ingredient>
     ) {
         for (recipeIngredient in recipeIngredients) {
-            val tableRow = TableRow(this).apply {
-                layoutParams = TableLayout.LayoutParams(
-                    TableLayout.LayoutParams.MATCH_PARENT,
-                    TableLayout.LayoutParams.WRAP_CONTENT
-                )
-                setBackgroundResource(R.drawable.table_border) // 테이블 테두리 설정
-            }
+            val tableRow = TableRow(this)
 
             val recipeIngredientTextView = TextView(this).apply {
                 text = recipeIngredient
                 layoutParams = TableRow.LayoutParams(
-                    0, // width를 0으로 설정하여 weight를 적용
+                    0,
                     TableRow.LayoutParams.WRAP_CONTENT,
-                    1f // weight를 1로 설정
+                    1f
                 )
             }
             tableRow.addView(recipeIngredientTextView)
@@ -188,17 +155,12 @@ class RecipeDetailsActivity : AppCompatActivity() {
                 val matchingUserIngredient = userIngredients.find { recipeIngredient.contains(it.name) }
                 text = matchingUserIngredient?.name ?: ""
                 layoutParams = TableRow.LayoutParams(
-                    0, // width를 0으로 설정하여 weight를 적용
+                    0,
                     TableRow.LayoutParams.WRAP_CONTENT,
-                    1f // weight를 1로 설정
+                    1f
                 )
             }
             tableRow.addView(userIngredientTextView)
-
-            // tableRow를 기존 부모 뷰에서 제거 (있는 경우)
-            val parent = tableRow.parent as? ViewGroup
-            parent?.removeView(tableRow)
-
 
             tableLayout.addView(tableRow)
         }
