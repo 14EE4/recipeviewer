@@ -22,31 +22,38 @@
             android:layout_height="wrap_content"
             android:text="웹페이지로 이동" />
 
+        <TextView
+            android:id="@+id/mainIngredientTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="주재료" />
+
         <TableLayout
-            android:id="@+id/ingredientTable"
+            android:id="@+id/mainIngredientTable"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:stretchColumns="*">
-            <!-- 표 내용은 코드에서 동적으로 추가 -->
-        </TableLayout>
+            android:layout_height="wrap_content" />
 
         <TextView
-            android:id="@+id/mainIngredientsTextView"
-            android:layout_width="match_parent"
+            android:id="@+id/subIngredientTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp" />
+            android:text="부재료" />
+
+        <TableLayout
+            android:id="@+id/subIngredientTable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <TextView
-            android:id="@+id/subIngredientsTextView"
-            android:layout_width="match_parent"
+            android:id="@+id/alternativeIngredientTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp" />
+            android:text="대체재료" />
 
-        <TextView
-            android:id="@+id/alternativeIngredientsTextView"
+        <TableLayout
+            android:id="@+id/alternativeIngredientTable"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="18sp" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

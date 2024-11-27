@@ -9,6 +9,13 @@ import com.example.recipeviewer.models.Recipe
  * @author 노평주
  */
 object IngredientHelper {
+    fun parseAllIngredients(recipe: Recipe, extractName: Boolean = true): List<String> {
+        val mainIngredients = parseIngredients(recipe.mainIngredients, extractName)
+        val subIngredients = parseIngredients(recipe.subIngredients, extractName)
+        val alternativeIngredients = parseIngredients(recipe.alternativeIngredients, extractName)
+        val allIngredients = mainIngredients + subIngredients + alternativeIngredients
+        return allIngredients
+    }
 
     fun parseIngredients(ingredients: String, extractName: Boolean = true): List<String> {
         val parsedIngredients = ingredients.split(",").map {
@@ -21,13 +28,7 @@ object IngredientHelper {
         return parsedIngredients
     }
 
-    fun parseAllIngredients(recipe: Recipe, extractName: Boolean = true): List<String> {
-        val mainIngredients = parseIngredients(recipe.mainIngredients, extractName)
-        val subIngredients = parseIngredients(recipe.subIngredients, extractName)
-        val alternativeIngredients = parseIngredients(recipe.alternativeIngredients, extractName)
-        val allIngredients = mainIngredients + subIngredients + alternativeIngredients
-        return allIngredients
-    }
+
 
     private fun extractIngredientName(ingredient: String): String {
         return ingredient.replace(Regex("\\s*\\d+.*"), "").trim()

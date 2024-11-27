@@ -333,7 +333,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
     }
 
-    // DatabaseHelper.kt
+
     fun deleteExcludedIngredient(userId: String, name: String, callback: (Boolean) -> Unit) {
         firestore.collection("users").document(userId).collection("excludedIngredients").document(name).delete()
             .addOnSuccessListener {
