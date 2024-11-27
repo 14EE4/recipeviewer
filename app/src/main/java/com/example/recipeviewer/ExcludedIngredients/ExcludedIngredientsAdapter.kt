@@ -1,5 +1,6 @@
 package com.example.recipeviewer.ExcludedIngredients
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,8 +15,10 @@ import android.widget.Toast
 
 
 
-class ExcludedIngredientsAdapter(private var excludedIngredientsList: MutableList<String>) :
-    RecyclerView.Adapter<ExcludedIngredientsAdapter.ViewHolder>() {
+class ExcludedIngredientsAdapter(
+    private var excludedIngredientsList: MutableList<String>,
+    private val context: Context // Context 매개변수 추가
+) : RecyclerView.Adapter<ExcludedIngredientsAdapter.ViewHolder>(){
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textView: TextView = itemView.findViewById(R.id.excludedIngredientTextView)
@@ -28,8 +31,9 @@ class ExcludedIngredientsAdapter(private var excludedIngredientsList: MutableLis
             auth = FirebaseAuth.getInstance()
             userId = auth.currentUser?.uid ?: ""
             databaseHelper = DatabaseHelper(itemView.context)
+
             deleteButton.setOnClickListener {
-                val position = bindingAdapterPosition // bindingAdapterPosition 사용
+                val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     val ingredient = (bindingAdapter as ExcludedIngredientsAdapter).excludedIngredientsList[position]
 
@@ -38,27 +42,23 @@ class ExcludedIngredientsAdapter(private var excludedIngredientsList: MutableLis
                     builder.setMessage("정말로 '${ingredient}'를 삭제하시겠습니까?")
 
                     builder.setPositiveButton("확인") { dialog, which ->
-                        // 데이터베이스에서 삭제
-                        val isDeleted = databaseHelper.deleteExcludedIngredient(userId, ingredient)
-
-                        if (isDeleted) {
-                            // RecyclerView 업데이트
-                            (bindingAdapter as ExcludedIngredientsAdapter).excludedIngredientsList.removeAt(position)
-                            (bindingAdapter as ExcludedIngredientsAdapter).notifyItemRemoved(position) // notifyItemRemoved 호출
-                        } else {
-                            // 삭제 실패 처리 (예: Toast 메시지 표시)
-                            Toast.makeText(itemView.context, "삭제 실패", Toast.LENGTH_SHORT).show()
+                        databaseHelper.deleteExcludedIngredient(userId, ingredient) { isSuccessful -> // 콜백 함수 사용
+                            if (isSuccessful) {
+                                (bindingAdapter as ExcludedIngredientsAdapter).excludedIngredientsList.removeAt(position)
+                                (bindingAdapter as ExcludedIngredientsAdapter).notifyItemRemoved(position)
+                            } else {
+                                Toast.makeText(itemView.context, "삭제 실패", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
 
                     builder.setNegativeButton("취소", null)
-
                     builder.show()
-
-
                 }
             }
         }
+
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -80,4 +80,6 @@ class ExcludedIngredientsAdapter(private var excludedIngredientsList: MutableLis
         excludedIngredientsList.addAll(newExcludedIngredientsList)
         notifyDataSetChanged()
     }
+
+
 }

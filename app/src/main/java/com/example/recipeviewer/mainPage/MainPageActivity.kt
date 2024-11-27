@@ -206,53 +206,64 @@ class MainPageActivity : AppCompatActivity() {
 
     private fun searchAndSortRecipesByIngredients(userId: String) {
         databaseHelper.readIngredients(userId) { ingredientList ->
-            val excludedIngredientList = databaseHelper.getExcludedIngredients() // SQLite에서 제외 재료 목록 가져오기
+            databaseHelper.getExcludedIngredients(userId) { excludedIngredientList: List<String> -> // SQLite에서 제외 재료 목록 가져오기
 
-            val matchingRecipes = recipeList.map { recipe ->
-                val recipeIngredients = parseAllIngredients(recipe)
-                val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
-                    ingredientList.any { dbIngredient ->
-                        recipeIngredient.contains(dbIngredient.name, ignoreCase = true)
+                val matchingRecipes = recipeList.map { recipe ->
+                    val recipeIngredients = parseAllIngredients(recipe)
+                    val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
+                        ingredientList.any { dbIngredient ->
+                            recipeIngredient.contains(dbIngredient.name, ignoreCase = true)
+                        }
                     }
-                }
 
-                // 제외 재료가 포함된 레시피는 commonIngredientsCount를 감소시켜 후순위로 보냄
-                val excludedIngredientsCount = recipeIngredients.count { recipeIngredient ->
-                    excludedIngredientList.any { excludedIngredient ->
-                        recipeIngredient.contains(excludedIngredient, ignoreCase = true) // excludedIngredient를 직접 사용
+                    // 제외 재료가 포함된 레시피는 commonIngredientsCount를 감소시켜 후순위로 보냄
+                    val excludedIngredientsCount = recipeIngredients.count { recipeIngredient ->
+                        excludedIngredientList.any { excludedIngredient ->
+                            recipeIngredient.contains(
+                                excludedIngredient,
+                                ignoreCase = true
+                            ) // excludedIngredient를 직접 사용
+                        }
                     }
+                    val finalCount = commonIngredientsCount - excludedIngredientsCount
+
+                    // Logcat에 출력
+                    Log.d(
+                        "RecipeMatch",
+                        "Recipe '${recipe.title}' has $finalCount matching ingredients (excluded: $excludedIngredientsCount)."
+                    )
+
+                    Pair(recipe, finalCount)
+                }.filter { it.second > 0 } // 일치하는 재료가 하나라도 있는 레시피만 필터링
+                    .sortedByDescending { it.second } // 일치하는 개수가 많은 순서대로 정렬
+
+                if (matchingRecipes.isEmpty()) {
+                    Toast.makeText(this, "비슷한 재료가 있는 레시피가 없습니다.", Toast.LENGTH_SHORT).show()
+                } else {
+                    val sortedRecipes = matchingRecipes.map { it.first }.toMutableList()
+                    recipeAdapter.updateData(sortedRecipes)
+                    Toast.makeText(
+                        this,
+                        "${sortedRecipes.size}개의 레시피가 검색되었습니다.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-                val finalCount = commonIngredientsCount - excludedIngredientsCount
-
-                // Logcat에 출력
-                Log.d("RecipeMatch", "Recipe '${recipe.title}' has $finalCount matching ingredients (excluded: $excludedIngredientsCount).")
-
-                Pair(recipe, finalCount)
-            }.filter { it.second > 0 } // 일치하는 재료가 하나라도 있는 레시피만 필터링
-                .sortedByDescending { it.second } // 일치하는 개수가 많은 순서대로 정렬
-
-            if (matchingRecipes.isEmpty()) {
-                Toast.makeText(this, "비슷한 재료가 있는 레시피가 없습니다.", Toast.LENGTH_SHORT).show()
-            } else {
-                val sortedRecipes = matchingRecipes.map { it.first }.toMutableList()
-                recipeAdapter.updateData(sortedRecipes)
-                Toast.makeText(this, "${sortedRecipes.size}개의 레시피가 검색되었습니다.", Toast.LENGTH_SHORT).show()
             }
         }
-    }
 
-    private fun logRecipeIngredients() {
-        val allIngredientsSet = mutableSetOf<String>()
+        fun logRecipeIngredients() {
+            val allIngredientsSet = mutableSetOf<String>()
 
-        recipeList.forEach { recipe ->
-            val recipeIngredients = parseAllIngredients(recipe)
-            allIngredientsSet.addAll(recipeIngredients)
+            recipeList.forEach { recipe ->
+                val recipeIngredients = parseAllIngredients(recipe)
+                allIngredientsSet.addAll(recipeIngredients)
+            }
+
+            // 집합의 모든 재료를 로그로 출력
+            allIngredientsSet.forEach { ingredient ->
+                Log.d("AllIngredientsSet", ingredient)
+            }
         }
 
-        // 집합의 모든 재료를 로그로 출력
-        allIngredientsSet.forEach { ingredient ->
-            Log.d("AllIngredientsSet", ingredient)
-        }
     }
-
 }

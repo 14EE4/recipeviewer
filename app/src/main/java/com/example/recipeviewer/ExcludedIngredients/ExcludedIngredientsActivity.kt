@@ -1,17 +1,18 @@
 package com.example.recipeviewer.ExcludedIngredients
 
-import android.content.SharedPreferences
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
+import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.size
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.R
 import com.example.recipeviewer.helpers.DatabaseHelper
-import android.widget.Button
-import androidx.appcompat.widget.SearchView
-import android.content.Context
-
-
+import com.google.firebase.auth.FirebaseAuth // Firebase Authentication import
+import com.google.firebase.firestore.FirebaseFirestore // Firebase Firestore import
 
 class ExcludedIngredientsActivity : AppCompatActivity() {
 
@@ -19,84 +20,68 @@ class ExcludedIngredientsActivity : AppCompatActivity() {
     private lateinit var excludedRecyclerView: RecyclerView
     private lateinit var excludedAdapter: ExcludedIngredientsAdapter
     private lateinit var excludedIngredientList: MutableList<String>
-    private lateinit var sharedPrefs: SharedPreferences
-
-
-
-
-
+    private lateinit var auth: FirebaseAuth
+    private lateinit var userId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_excluded_ingredients)
 
-        excludedAdapter = ExcludedIngredientsAdapter(mutableListOf()) // 초기에는 빈 목록으로 생성
-        // ...
+        // Firebase Authentication 초기화
+        auth = FirebaseAuth.getInstance()
+        userId = auth.currentUser?.uid ?: ""
 
+        // DatabaseHelper 초기화
         databaseHelper = DatabaseHelper(this)
-
-        sharedPrefs = getSharedPreferences("excluded_ingredients", Context.MODE_PRIVATE)
-
-        // 제외 재료 목록 초기화 (데이터베이스에서 불러오기)
-        excludedIngredientList = databaseHelper.getExcludedIngredients().toMutableList()
-
-
-        // 제외 재료 목록 RecyclerView 초기화
-        excludedRecyclerView = findViewById(R.id.recyclerViewExcludedIngredients)
-        excludedRecyclerView.layoutManager = LinearLayoutManager(this)
 
         // 제외 재료 목록 초기화
         excludedIngredientList = mutableListOf()
 
         // 제외 재료 어댑터 초기화
-        excludedAdapter = ExcludedIngredientsAdapter(excludedIngredientList)
+        excludedAdapter = ExcludedIngredientsAdapter(excludedIngredientList, this)
+        excludedRecyclerView = findViewById(R.id.recyclerViewExcludedIngredients)
+        excludedRecyclerView.layoutManager = LinearLayoutManager(this)
         excludedRecyclerView.adapter = excludedAdapter
 
+        val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchViewExcludedIngredients)
+        val addButton = findViewById<Button>(R.id.addExcludedIngredientButton)
 
-
-        val searchView: SearchView = findViewById(R.id.searchViewExcludedIngredients) // SearchView 타입 수정
-        val addButton: Button = findViewById(R.id.addExcludedIngredientButton)
+        // ExcludedIngredientsActivity.kt
+// ...
 
         addButton.setOnClickListener {
             val query = searchView.query.toString()
             if (query.isNotBlank()) {
-                // 데이터베이스에 제외 재료 추가
-                databaseHelper.addExcludedIngredient(query)
-
-                // RecyclerView에 제외 재료 추가 및 업데이트
-                excludedIngredientList.add(query)
-                excludedAdapter.updateData(excludedIngredientList) // 어댑터 업데이트
-                searchView.setQuery("", false) // 검색창 초기화
-
-                // SharedPreferences에 저장
-                saveExcludedIngredients()
+                databaseHelper.addExcludedIngredient(userId, query) {
+                    runOnUiThread { // 메인 스레드에서 UI 업데이트
+                        excludedIngredientList.add(query)
+                        excludedAdapter.notifyItemInserted(excludedIngredientList.size - 1)
+                        excludedRecyclerView.scrollToPosition(excludedIngredientList.size - 1) // RecyclerView 스크롤
+                        searchView.setQuery("", false)
+                        Toast.makeText(this@ExcludedIngredientsActivity, "제외 재료가 추가되었습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Toast.makeText(this, "제외할 재료를 입력하세요.", Toast.LENGTH_SHORT).show()
             }
         }
 
+// ...
 
+        // Firebase Firestore에서 제외 재료 로드
+        loadExcludedIngredients()
+    }
 
-        // ... (기존 코드) ...
+    private fun loadExcludedIngredients() {
+        databaseHelper.getExcludedIngredients(userId) { ingredients ->
+            excludedIngredientList = ingredients.toMutableList()
+            excludedAdapter.updateData(excludedIngredientList)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        // SharedPreferences에서 데이터 로드
-        excludedIngredientList = loadExcludedIngredients()
-        excludedAdapter.updateData(excludedIngredientList)
+        // Firebase Firestore에서 제외 재료 로드
+        loadExcludedIngredients()
     }
-
-    // SharedPreferences에 저장
-    private fun saveExcludedIngredients() {
-        val editor = sharedPrefs.edit()
-        editor.putStringSet("excluded_ingredients_set", excludedIngredientList.toSet())
-        editor.apply()
-    }
-
-    // SharedPreferences에서 로드
-    private fun loadExcludedIngredients(): MutableList<String> {
-        val excludedIngredientsSet = sharedPrefs.getStringSet("excluded_ingredients_set", setOf())
-        return excludedIngredientsSet?.toMutableList() ?: mutableListOf() // 안전 호출 연산자 사용
-    }
-
-
 }

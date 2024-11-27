@@ -43,6 +43,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
+
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val userId: String = auth.currentUser?.uid ?: ""
 
@@ -256,47 +257,44 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
     }
 
-    fun addExcludedIngredient(name: String): Boolean {
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_EXCLUDED_INGREDIENT_NAME, name)
-        }
-        val result = db.insert(TABLE_EXCLUDED_INGREDIENTS, null, values)
-        db.close()
-        return result != -1L
+    fun addExcludedIngredient(userId: String, name: String, callback: (() -> Unit)? = null): Task<Void> { // 콜백 추가
+        val data = hashMapOf("name" to name)
+        return firestore.collection("users").document(userId).collection("excludedIngredients").document(name).set(data)
+            .addOnSuccessListener {
+                // Firestore에 데이터 추가 성공 후 콜백 함수 호출
+                callback?.invoke()
+            }
+            .addOnFailureListener { exception ->
+                Log.e("DatabaseHelper", "Error adding excluded ingredient.", exception)
+                // 오류 처리
+            }
     }
 
     // 제외 재료 목록 불러오기
-    fun getExcludedIngredients(): List<String> {
-        val excludedIngredientsList = mutableListOf<String>()
-        val db = readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM $TABLE_EXCLUDED_INGREDIENTS", null)
-
-        if (cursor.moveToFirst()) {
-            do {
-                val name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXCLUDED_INGREDIENT_NAME))
-                excludedIngredientsList.add(name)
-            } while (cursor.moveToNext())
-        }
-
-        cursor.close()
-        // db.close() // SQLiteOpenHelper에서 관리하므로 직접 close() 호출 필요 없음
-        return excludedIngredientsList
+    // DatabaseHelper.kt
+    fun getExcludedIngredients(userId: String, callback: (List<String>) -> Unit) {
+        firestore.collection("users").document(userId).collection("excludedIngredients").get()
+            .addOnSuccessListener { documents ->
+                val excludedIngredientsList = mutableListOf<String>()
+                for (document in documents) {
+                    excludedIngredientsList.add(document.getString("name") ?: "")
+                }
+                callback(excludedIngredientsList)
+            }
+            .addOnFailureListener { exception ->
+                Log.e("DatabaseHelper", "Error getting excluded ingredients.", exception)
+                // 오류 처리
+            }
     }
 
-    fun deleteExcludedIngredient(userId: String, ingredient: String): Boolean {
-        val db = writableDatabase
-        try {
-            db.beginTransaction()
-            val whereClause = "$COLUMN_EXCLUDED_INGREDIENT_NAME = ?"
-            val whereArgs = arrayOf(ingredient)
-            val result = db.delete(TABLE_EXCLUDED_INGREDIENTS, whereClause, whereArgs)
-            db.setTransactionSuccessful()
-            // 데이터베이스를 닫기 전에 삭제 결과를 반환합니다.
-            return result > 0
-        } finally {
-            db.endTransaction()
-            db.close()
-        }
+    // DatabaseHelper.kt
+    fun deleteExcludedIngredient(userId: String, name: String, callback: (Boolean) -> Unit) {
+        firestore.collection("users").document(userId).collection("excludedIngredients").document(name).delete()
+            .addOnSuccessListener {
+                callback(true) // 삭제 성공 시 true 전달
+            }
+            .addOnFailureListener {
+                callback(false) // 삭제 실패 시 false 전달
+            }
     }
 }
