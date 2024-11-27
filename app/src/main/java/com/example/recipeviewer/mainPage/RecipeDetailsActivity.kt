@@ -1,4 +1,4 @@
-// RecipeDetailsActivity.kt
+
 package com.example.recipeviewer.mainPage
 
 import android.content.Intent
@@ -8,6 +8,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.recipeviewer.R
 
+/**
+ * MainPageActivity에서 레시피를 클릭했을 때 레시피 재료와 url버튼으로 레시피를 볼 수 있음(WebViewActivity)
+ *
+ * @author 노평주
+ */
 class RecipeDetailsActivity : AppCompatActivity() {
 
     private lateinit var titleTextView: TextView

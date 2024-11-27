@@ -18,9 +18,11 @@ import com.example.recipeviewer.R
 import java.util.Locale
 
 
-
-
-
+/**
+ * RecipeDetailsActivity에서 웹페이지로 이동 버튼 누르면 나옴
+ *
+ * @author
+ */
 class WebViewActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView

@@ -18,6 +18,15 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
+/**
+ * 레시피 데이터베이스를 관리하는 클래스
+ * 레시피 데이터베이스는 assets 폴더에 있는 recipes.db를 사용
+ * 이 클래스는 SQLiteOpenHelper를 상속받아 데이터베이스 생성 및 관리
+ * recipes.db를 복사하여 사용
+ * 재료 추가 수정 삭제 초기화는 Firestore에서 처리
+ * 
+ * @author 노평주
+ */
 class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {

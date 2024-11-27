@@ -15,6 +15,13 @@ import java.util.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 
+/**
+ * AddIngredientActivity는 사용자가 재료를 추가할 수 있는 액티비티입니다.
+ * MainPageActivity에서 메뉴를 클릭하여 들어올 수 있음
+ * FirebaseAuth로 사용자별로 재료를 저장 가능
+ * 
+ * @author 노평주
+ */
 class AddIngredientActivity : AppCompatActivity() {
 
     private lateinit var databaseHelper: DatabaseHelper

@@ -21,7 +21,14 @@ import com.example.recipeviewer.ExcludedIngredients.ExcludedIngredientsActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlin.text.contains
 
-
+/**
+ * 로그인 후 나오는 메인 페이지.
+ * 재료 검색창, 음성 인식 검색, 재료 검색 버튼
+ * recyclerview로 레시피 리스트
+ * -클릭하면 RecipeDetailsActivity로 페이지 이동
+ *
+ * @author 노평주
+ */
 class MainPageActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView

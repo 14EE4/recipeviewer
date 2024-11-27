@@ -8,6 +8,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.R
 import com.example.recipeviewer.models.Recipe
 
+/**
+ * mainpageactivity에서 recyclerview에 레시피 목록을 표시하는 클래스
+ * 
+ * @author 노평주
+ */
 class RecipeAdapter(
     private var recipes: List<Recipe>,
     private val itemClick: (Recipe) -> Unit // 레시피 클릭 시 호출되는 함수

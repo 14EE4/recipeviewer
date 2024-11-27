@@ -20,6 +20,13 @@ import com.google.firebase.auth.FirebaseAuth
 
 import java.util.Calendar
 
+/**
+ * AddIngredientActivity에서 재료를 보여주는 RecyclerView의 Adapter
+ * 재료 수정, 삭제 기능 구현
+ * FirebaseAuth로 사용자별 재료를 수정, 삭제 가능
+ * 
+ * @author 노평주
+ */
 class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, private val context: Context) : RecyclerView.Adapter<IngredientAdapter.IngredientViewHolder>() {
 
     inner class IngredientViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
