@@ -18,6 +18,7 @@ import com.example.recipeviewer.AddIngredient.AddIngredientActivity
 import com.example.recipeviewer.login.MainActivity
 import com.example.recipeviewer.R
 import com.example.recipeviewer.ExcludedIngredients.ExcludedIngredientsActivity
+import com.example.recipeviewer.helpers.IngredientHelper
 import com.google.firebase.auth.FirebaseAuth
 import kotlin.text.contains
 
@@ -82,11 +83,7 @@ class MainPageActivity : AppCompatActivity() {
 
         recipeAdapter = RecipeAdapter(recipes) { recipe ->
             val intent = Intent(this, RecipeDetailsActivity::class.java).apply {
-                putExtra("title", recipe.title)
-                putExtra("mainIngredients", recipe.mainIngredients)
-                putExtra("subIngredients", recipe.subIngredients)          // 부재료 전달
-                putExtra("alternativeIngredients", recipe.alternativeIngredients) // 대체재료 전달
-                putExtra("recipeUrl", recipe.recipeUrl)
+                putExtra("recipeId", recipe.id) // 레시피 ID만 전달
             }
             startActivity(intent)
         }
@@ -133,6 +130,7 @@ class MainPageActivity : AppCompatActivity() {
                 startActivity(Intent(this, AddIngredientActivity::class.java))
                 true
             }
+
             R.id.action_logout -> {
                 // 로그아웃 처리
                 Toast.makeText(this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show()
@@ -140,6 +138,7 @@ class MainPageActivity : AppCompatActivity() {
                 finish()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -167,12 +166,17 @@ class MainPageActivity : AppCompatActivity() {
     }
 
     private fun searchRecipes(query: String) {
-        val filteredRecipes = recipeList.filter { it.title.contains(query, ignoreCase = true) }.toMutableList()
+        val filteredRecipes =
+            recipeList.filter { it.title.contains(query, ignoreCase = true) }.toMutableList()
         recipeAdapter.updateData(filteredRecipes)
         Toast.makeText(this, "검색 결과: $query", Toast.LENGTH_SHORT).show()
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         voiceSearchHelper.handlePermissionsResult(requestCode, grantResults)
     }
@@ -182,34 +186,13 @@ class MainPageActivity : AppCompatActivity() {
         voiceSearchHelper.release()
     }
 
-    private fun parseIngredients(ingredients: String): List<String> {
-        val parsedIngredients = ingredients.split(",").map { extractIngredientName(it) }
-        //Log.d("MainPageActivity", "Parsed Ingredients: $parsedIngredients")
-        return parsedIngredients
-    }
-
-    private fun parseAllIngredients(recipe: Recipe): List<String> {
-        val mainIngredients = parseIngredients(recipe.mainIngredients)
-        val subIngredients = parseIngredients(recipe.subIngredients)
-        val alternativeIngredients = parseIngredients(recipe.alternativeIngredients)
-        val allIngredients = mainIngredients + subIngredients + alternativeIngredients
-        //Log.d("MainPageActivity", "All Parsed Ingredients for Recipe '${recipe.title}': $allIngredients")
-        return allIngredients
-    }
-
-    private fun extractIngredientName(ingredient: String): String {
-        // 숫자, 괄호, 단위 등을 제거하여 재료 이름만 추출
-        return ingredient.replace(Regex("\\s*\\d+.*"), "").trim()
-    }
-
-
-
     private fun searchAndSortRecipesByIngredients(userId: String) {
         databaseHelper.readIngredients(userId) { ingredientList ->
             databaseHelper.getExcludedIngredients(userId) { excludedIngredientList: List<String> -> // SQLite에서 제외 재료 목록 가져오기
 
                 val matchingRecipes = recipeList.map { recipe ->
-                    val recipeIngredients = parseAllIngredients(recipe)
+                    val recipeIngredients =
+                        IngredientHelper.parseAllIngredients(recipe) // IngredientHelper 사용
                     val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
                         ingredientList.any { dbIngredient ->
                             recipeIngredient.contains(dbIngredient.name, ignoreCase = true)
@@ -255,7 +238,7 @@ class MainPageActivity : AppCompatActivity() {
             val allIngredientsSet = mutableSetOf<String>()
 
             recipeList.forEach { recipe ->
-                val recipeIngredients = parseAllIngredients(recipe)
+                val recipeIngredients = IngredientHelper.parseAllIngredients(recipe)
                 allIngredientsSet.addAll(recipeIngredients)
             }
 
@@ -264,6 +247,5 @@ class MainPageActivity : AppCompatActivity() {
                 Log.d("AllIngredientsSet", ingredient)
             }
         }
-
     }
 }

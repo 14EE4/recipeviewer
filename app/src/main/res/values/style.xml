@@ -12,6 +12,19 @@
         <item name="android:textSize">18sp</item>
     </style>
 
-    <!-- 다른 스타일 요소 추가 가능 -->
+    <style name="IngredientTable">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:stretchColumns">*</item>
+        <item name="android:divider">@drawable/table_divider</item>
+        <item name="android:showDividers">middle</item>
+    </style>
+
+    <style name="IngredientTableRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:divider">@drawable/table_divider</item>
+        <item name="android:showDividers">middle</item>
+    </style>
 </resources>
 

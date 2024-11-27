@@ -179,7 +179,53 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return recipeList
     }
 
+    fun readRecipeById(recipeId: Int): Recipe? {
+        val db = this.readableDatabase
+        val cursor: Cursor = db.rawQuery("SELECT * FROM recipes WHERE id = ?", arrayOf(recipeId.toString()))
 
+        // 열 인덱스 확인
+        val idIndex = cursor.getColumnIndex("id")
+        val titleIndex = cursor.getColumnIndex("title")
+        val mainIngredientsIndex = cursor.getColumnIndex("main_ingredients")
+        val subIngredientsIndex = cursor.getColumnIndex("sub_ingredients")
+        val alternativeIngredientsIndex = cursor.getColumnIndex("alternative_ingredients")
+        val cookingTimeIndex = cursor.getColumnIndex("cooking_time")
+        val caloriesIndex = cursor.getColumnIndex("calories")
+        val portionsIndex = cursor.getColumnIndex("portions")
+        val descriptionIndex = cursor.getColumnIndex("description")
+        val recipeUrlIndex = cursor.getColumnIndex("recipe_url")
+
+        var recipe: Recipe? = null
+
+        // 각 열의 인덱스가 -1이 아닌지 확인
+        if (idIndex != -1 && titleIndex != -1 && mainIngredientsIndex != -1 &&
+            subIngredientsIndex != -1 && alternativeIngredientsIndex != -1 &&
+            cookingTimeIndex != -1 && caloriesIndex != -1 &&
+            portionsIndex != -1 && descriptionIndex != -1 &&
+            recipeUrlIndex != -1
+        ) {
+            if (cursor.moveToFirst()) {
+                recipe = Recipe(
+                    id = cursor.getInt(idIndex),
+                    title = cursor.getString(titleIndex),
+                    mainIngredients = cursor.getString(mainIngredientsIndex),
+                    subIngredients = cursor.getString(subIngredientsIndex),
+                    alternativeIngredients = cursor.getString(alternativeIngredientsIndex),
+                    cookingTime = cursor.getString(cookingTimeIndex),
+                    calories = cursor.getString(caloriesIndex),
+                    portions = cursor.getString(portionsIndex),
+                    description = cursor.getString(descriptionIndex),
+                    recipeUrl = cursor.getString(recipeUrlIndex)
+                )
+            }
+        } else {
+            Log.e("Database", "One or more column names are incorrect.")
+        }
+
+        cursor.close()
+        db.close()
+        return recipe
+    }
 
     fun addIngredient(
         userId: String,

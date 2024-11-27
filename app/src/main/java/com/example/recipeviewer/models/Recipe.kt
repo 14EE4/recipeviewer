@@ -1,6 +1,10 @@
-// Recipe.kt
-package com.example.recipeviewer.models
 
+package com.example.recipeviewer.models
+/**
+ * 레시피 모델
+ *
+ * @author 노평주
+ */
 data class Recipe(
     val id: Int,  // id 매개변수 추가
     val title: String,
