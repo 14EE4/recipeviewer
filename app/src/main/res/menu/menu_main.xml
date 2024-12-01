@@ -5,9 +5,16 @@
         android:title="Add Ingredient"
         android:orderInCategory="100"
         android:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_excluded_ingredients"
+        android:title="Excluded Ingredients"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
     <item
         android:id="@+id/action_logout"
         android:title="Logout"
         android:orderInCategory="100"
         android:showAsAction="never" />
+
 </menu>

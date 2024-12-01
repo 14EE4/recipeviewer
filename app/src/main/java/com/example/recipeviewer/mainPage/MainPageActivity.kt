@@ -67,10 +67,7 @@ class MainPageActivity : AppCompatActivity() {
         // DatabaseHelper 초기화
         databaseHelper = DatabaseHelper(this)
 
-        findViewById<Button>(R.id.addExcludedIngredientButton).setOnClickListener {
-            val intent = Intent(this, ExcludedIngredientsActivity::class.java)
-            startActivity(intent)
-        }
+
 
         // 레시피 불러오기
         recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
@@ -130,7 +127,11 @@ class MainPageActivity : AppCompatActivity() {
                 startActivity(Intent(this, AddIngredientActivity::class.java))
                 true
             }
-
+            R.id.action_excluded_ingredients -> {
+                // 제외 재료 화면으로 이동
+                startActivity(Intent(this, ExcludedIngredientsActivity::class.java))
+                true
+            }
             R.id.action_logout -> {
                 // 로그아웃 처리
                 Toast.makeText(this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show()
@@ -138,7 +139,6 @@ class MainPageActivity : AppCompatActivity() {
                 finish()
                 true
             }
-
             else -> super.onOptionsItemSelected(item)
         }
     }

@@ -37,11 +37,7 @@
             android:layout_height="wrap_content"
             android:text="재료 검색" />
 
-        <Button
-            android:id="@+id/addExcludedIngredientButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="제외 추가" />
+
     </LinearLayout>
 
     <Button

@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
     // 로그인 처리 함수
     private fun loginUser(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password)
