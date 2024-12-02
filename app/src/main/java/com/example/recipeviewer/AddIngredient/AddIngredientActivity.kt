@@ -48,13 +48,12 @@ class AddIngredientActivity : AppCompatActivity() {
         ingredientList = mutableListOf()
 
         // 뷰 초기화
-        ingredientNameEditText = findViewById(R.id.editTextIngredientName)
-        ingredientQuantityEditText = findViewById(R.id.editTextIngredientQuantity)
-        ingredientUnitSpinner = findViewById(R.id.spinnerIngredientUnit)
-        val ingredientExpiryDateEditText: EditText = findViewById(R.id.editTextIngredientExpiryDate)
-        val addButton: Button = findViewById(R.id.buttonAddIngredient)
-
-        val clearButton: Button = findViewById(R.id.buttonClearIngredients)
+        ingredientNameEditText = findViewById(R.id.editTextIngredientName)//재료이름
+        ingredientQuantityEditText = findViewById(R.id.editTextIngredientQuantity)//재료분량
+        ingredientUnitSpinner = findViewById(R.id.spinnerIngredientUnit)//재료단위
+        val ingredientExpiryDateEditText: EditText = findViewById(R.id.editTextIngredientExpiryDate)//유통기한
+        val addButton: Button = findViewById(R.id.buttonAddIngredient)//추가버튼
+        val clearButton: Button = findViewById(R.id.buttonClearIngredients)//초기화버튼
 
         // Spinner에 사용할 데이터 리스트 생성
         val unitList = mutableListOf<String>()
@@ -104,11 +103,7 @@ class AddIngredientActivity : AppCompatActivity() {
         // IngredientAdapter 초기화 및 클릭 리스너 설정
         ingredientAdapter = IngredientAdapter(ingredientList, this)
 
-
-
         recyclerView.adapter = ingredientAdapter
-
-
 
         addButton.setOnClickListener {
             val ingredientName = ingredientNameEditText.text.toString()
@@ -123,8 +118,6 @@ class AddIngredientActivity : AppCompatActivity() {
                 // 재료를 Firestore에 추가
                 databaseHelper.addIngredient(userId, ingredientName, ingredientQuantity, ingredientUnit, ingredientExpiryDate)
                     .addOnSuccessListener { documentReference ->
-                        // Firestore에 데이터 추가 성공 로그
-                        Log.d("AddIngredientActivity", "Ingredient added to Firestore with ID: ${documentReference.id}")
 
                         Toast.makeText(this, "재료가 추가되었습니다.", Toast.LENGTH_SHORT).show()
 
@@ -137,13 +130,7 @@ class AddIngredientActivity : AppCompatActivity() {
                             expiryDate = ingredientExpiryDate
                         )
 
-                        // 재료 리스트에 추가 시도 로그
-                        Log.d("AddIngredientActivity", "Attempting to add ingredient to list")
-
                         ingredientList.add(newIngredient)
-
-                        // 리스트에 추가된 후 크기 로그
-                        Log.d("AddIngredientActivity", "Ingredient list size after addition: ${ingredientList.size}")
 
                         // UI 스레드에서 RecyclerView 업데이트
                         runOnUiThread {
@@ -166,8 +153,7 @@ class AddIngredientActivity : AppCompatActivity() {
                 Toast.makeText(this, "모든 필드를 입력하세요.", Toast.LENGTH_SHORT).show()
             }
         }
-
-
+        //초기화버튼 클릭 리스너
         clearButton.setOnClickListener {
             // 재료 목록 초기화
             databaseHelper.clearIngredients(userId)
@@ -178,9 +164,7 @@ class AddIngredientActivity : AppCompatActivity() {
 
         }
     }
-
-
-
+    //나갔다 들어왔을때 재료 목록 불러오기
     override fun onResume() {
         super.onResume()
         // 재료 목록을 Firestore에서 다시 불러오기
@@ -189,23 +173,20 @@ class AddIngredientActivity : AppCompatActivity() {
             ingredientAdapter.updateData(ingredientList)
         }
     }
-
     // 권한 요청 결과 처리
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         voiceSearchHelper.handlePermissionsResult(requestCode, grantResults)
     }
-
+    //액티비티 소멸시
     override fun onDestroy() {
         super.onDestroy()
         voiceSearchHelper.release()
     }
-
     // 음성 인식 결과 파싱 및 입력 필드 설정
     private fun parseAndFillIngredientFields(spokenText: String, nameEditText: EditText, quantityEditText: EditText, unitSpinner: Spinner) {
         val regex = Regex("(.*?)\\s*(\\d+)(.*)") // 이름, 분량, 단위를 추출하는 정규식 (공백 없는 경우)
         val matchResult = regex.find(spokenText)
-
 
         if (matchResult != null) {
             val (name, quantity, unit) = matchResult.destructured

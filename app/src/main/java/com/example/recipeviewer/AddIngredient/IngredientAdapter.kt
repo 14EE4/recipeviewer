@@ -7,17 +7,15 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.app.DatePickerDialog
+import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import androidx.appcompat.app.AlertDialog
-import android.widget.*
 import kotlin.text.toIntOrNull
 import java.util.Calendar
 import com.example.recipeviewer.models.Ingredient
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.R
 import com.google.firebase.auth.FirebaseAuth
-
-
 
 /**
  * AddIngredientActivity에서 재료를 보여주는 RecyclerView의 Adapter
@@ -44,19 +42,21 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
             auth = FirebaseAuth.getInstance()
             userId = auth.currentUser?.uid ?: ""
             databaseHelper = DatabaseHelper(context) // context를 사용하여 DatabaseHelper 초기화
+            //개별 재료 수정 버튼 클릭 리스너
             editButton.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     val ingredient = ingredientList[position]
-
+                    
+                    //수정버튼 누르면 나오는 다이얼로그
                     val builder = AlertDialog.Builder(context)
                     builder.setTitle("재료 수정")
 
-                    val view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_ingredient, null)
-                    val nameEditText = view.findViewById<EditText>(R.id.edit_text_name)
-                    val quantityEditText = view.findViewById<EditText>(R.id.edit_text_quantity)
-                    val unitSpinner = view.findViewById<Spinner>(R.id.spinner_unit) // Spinner로 변경
-                    val expiryDateEditText = view.findViewById<EditText>(R.id.edit_text_expiry_date)
+                    val view = LayoutInflater.from(context).inflate(R.layout.dialog_edit_ingredient, null)//재료 수정 다이얼로그
+                    val nameEditText = view.findViewById<EditText>(R.id.edit_text_name)//재료이름
+                    val quantityEditText = view.findViewById<EditText>(R.id.edit_text_quantity)//재료분량
+                    val unitSpinner = view.findViewById<Spinner>(R.id.spinner_unit) //재료단위
+                    val expiryDateEditText = view.findViewById<EditText>(R.id.edit_text_expiry_date)//유통기한
 
                     nameEditText.setText(ingredient.name)
                     quantityEditText.setText(ingredient.quantity.toString())
@@ -74,6 +74,7 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
                     val unitIndex = adapter.getPosition(ingredient.unit)
                     unitSpinner.setSelection(unitIndex)
 
+                    //유통기한 텍스트 클릭 리스너
                     expiryDateEditText.setOnClickListener {
                         val calendar = Calendar.getInstance()
                         val year = calendar.get(Calendar.YEAR)
@@ -92,7 +93,6 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
                         )
                         datePickerDialog.show()
                     }
-
                     builder.setView(view)
 
                     builder.setPositiveButton("확인") { dialog, which ->
@@ -112,13 +112,12 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
 
                         notifyItemChanged(position) // 변경된 항목만 업데이트
                     }
-
                     builder.setNegativeButton("취소", null)
 
                     builder.show()
                 }
             }
-
+            //삭제버튼
             deleteButton.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
@@ -136,29 +135,19 @@ class IngredientAdapter(private var ingredientList: MutableList<Ingredient>, pri
                         ingredientList.removeAt(position)
                         notifyItemRemoved(position)
                     }
-
                     builder.setNegativeButton("취소", null)
 
                     builder.show()
-
-
                 }
             }
-
         }
     }
-
-
-
-
-
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): IngredientViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_ingredient, parent, false)
         return IngredientViewHolder(view)
     }
-
+    //재료 정보 표시
     override fun onBindViewHolder(holder: IngredientViewHolder, position: Int) {
         val ingredient = ingredientList[position]
         holder.ingredientName.text = ingredient.name
