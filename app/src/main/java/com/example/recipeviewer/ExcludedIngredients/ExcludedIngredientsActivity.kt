@@ -53,11 +53,12 @@ class ExcludedIngredientsActivity : AppCompatActivity() {
             val query = searchView.query.toString()
             if (query.isNotBlank()) {
                 databaseHelper.addExcludedIngredient(userId, query) {
-                    runOnUiThread { // 메인 스레드에서 UI 업데이트
-                        excludedIngredientList.add(query)
-                        excludedAdapter.notifyItemInserted(excludedIngredientList.size - 1)
-                        excludedRecyclerView.scrollToPosition(excludedIngredientList.size - 1) // RecyclerView 스크롤
-                        searchView.setQuery("", false)
+                    runOnUiThread { // Firestore 작업 완료 후 UI 업데이트
+                        excludedIngredientList.add(query) // 리스트에 추가
+                        excludedAdapter.updateData(excludedIngredientList) // 어댑터 데이터 갱신
+                        excludedAdapter.notifyItemInserted(excludedIngredientList.size - 1) // 변경 사항 알림
+                        excludedRecyclerView.scrollToPosition(excludedIngredientList.size - 1) // 스크롤 이동
+                        searchView.setQuery("", false) // 검색창 초기화
                         Toast.makeText(this@ExcludedIngredientsActivity, "제외 재료가 추가되었습니다.", Toast.LENGTH_SHORT).show()
                     }
                 }
