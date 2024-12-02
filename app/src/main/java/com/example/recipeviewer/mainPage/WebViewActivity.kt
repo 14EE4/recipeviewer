@@ -71,6 +71,7 @@ class WebViewActivity : AppCompatActivity() {
 
         //tts 출력 버튼
         ttsButton.setOnClickListener {
+            //getTextContent로 tts 재생
             webView.loadUrl("javascript:(function() { " +
                     "var textContent = document.body.innerText; " +
                     "Android.getTextContent(textContent); " +

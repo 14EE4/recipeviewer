@@ -67,8 +67,7 @@ class MainPageActivity : AppCompatActivity() {
         recipeList = databaseHelper.readAllData()
 
         // 클릭 리스너와 함께 어댑터 초기화
-        val recipes = databaseHelper.readAllData()
-        recipeAdapter = RecipeAdapter(recipes) { recipe ->
+        recipeAdapter = RecipeAdapter(recipeList) { recipe ->
             val intent = Intent(this, RecipeDetailsActivity::class.java).apply {
                 putExtra("recipeId", recipe.id) // 레시피 ID만 전달
             }

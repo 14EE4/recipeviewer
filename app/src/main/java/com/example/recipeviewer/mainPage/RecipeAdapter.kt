@@ -10,6 +10,7 @@ import com.example.recipeviewer.models.Recipe
 
 /**
  * mainpageactivity에서 recyclerview에 레시피 목록을 표시하는 클래스
+ * 레시피 이름만 나옴
  * 
  * @author 노평주
  */
