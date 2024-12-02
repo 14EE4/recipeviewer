@@ -49,7 +49,7 @@ class RecipeAdapter(
         return recipes.size // 레시피 목록 크기 반환
     }
 
-    // 레시피 목록 업데이트 메소드
+    // 재료 기반 검색 시 레시피 목록 업데이트
     fun updateData(newRecipes: MutableList<Recipe>) {
         recipes = newRecipes
         notifyDataSetChanged() // 데이터가 변경되었음을 어댑터에 알림
