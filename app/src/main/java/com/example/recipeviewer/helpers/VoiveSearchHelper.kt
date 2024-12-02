@@ -1,7 +1,5 @@
 package com.example.recipeviewer.helpers
 
-
-
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -9,12 +7,12 @@ import android.content.pm.PackageManager
 import android.speech.RecognitionListener 
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
-import android.util.Log
 
 /**
  * 음성 검색 헬퍼 클래스
@@ -29,9 +27,6 @@ class VoiceSearchHelper(private val activity: Activity, private val onVoiceResul
     private val RECORD_AUDIO_REQUEST_CODE = 1
 
     init {
-        // 권한 요청 (init 블록에서 제거)
-        // requestAudioPermission()
-
         speechRecognizer.setRecognitionListener(object : RecognitionListener {
             override fun onResults(results: Bundle?) {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
@@ -44,7 +39,6 @@ class VoiceSearchHelper(private val activity: Activity, private val onVoiceResul
                 Toast.makeText(activity, "음성 인식 오류 발생", Toast.LENGTH_SHORT).show()
             }
 
-            // 필요시 다른 RecognitionListener 메서드를 구현할 수 있습니다.
             override fun onReadyForSpeech(params: Bundle?) {}
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
@@ -55,7 +49,7 @@ class VoiceSearchHelper(private val activity: Activity, private val onVoiceResul
         })
     }
 
-    // 음성 인식 시작 메서드 (수정)
+    // 음성 인식 시작 메서드
     fun startVoiceRecognition() {
         if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             // 권한이 없는 경우 권한 요청
@@ -70,12 +64,12 @@ class VoiceSearchHelper(private val activity: Activity, private val onVoiceResul
         }
     }
 
-    // 권한 요청 결과 처리 (수정)
+    // 권한 요청 결과 처리
     fun handlePermissionsResult(requestCode: Int, grantResults: IntArray) {
         if (requestCode == RECORD_AUDIO_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Log.d("VoiceSearchHelper", "오디오 권한이 허용되었습니다.")
             // 권한이 허용된 경우 음성 인식 시작
-            startVoiceRecognition() // 이 부분 추가
+            startVoiceRecognition()
         } else {
             Log.d("VoiceSearchHelper", "오디오 권한이 필요합니다.")
             Toast.makeText(activity, "오디오 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
