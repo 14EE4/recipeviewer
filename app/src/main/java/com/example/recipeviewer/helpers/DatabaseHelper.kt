@@ -129,7 +129,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         // 데이터베이스 버전 업그레이드 시 필요한 작업
     }
-
+    //레시피 읽기
     fun readAllData(): MutableList<Recipe> {
         val recipeList = mutableListOf<Recipe>()
         val db = this.readableDatabase

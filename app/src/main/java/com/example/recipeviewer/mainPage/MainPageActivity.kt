@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.geometry.isEmpty
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.helpers.DatabaseHelper
@@ -55,11 +56,6 @@ class MainPageActivity : AppCompatActivity() {
             searchRecipes(query)
         }
 
-        // 음성 검색 버튼 설정
-        findViewById<Button>(R.id.voiceSearchButton).setOnClickListener {
-            voiceSearchHelper.startVoiceRecognition()
-        }
-
         // RecyclerView 초기화
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -68,11 +64,10 @@ class MainPageActivity : AppCompatActivity() {
         databaseHelper = DatabaseHelper(this)
 
         // 레시피 불러오기
-        recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
+        recipeList = databaseHelper.readAllData()
 
         // 클릭 리스너와 함께 어댑터 초기화
-        val recipes = databaseHelper.readAllData().toMutableList() // List를 MutableList로 변환
-
+        val recipes = databaseHelper.readAllData()
         recipeAdapter = RecipeAdapter(recipes) { recipe ->
             val intent = Intent(this, RecipeDetailsActivity::class.java).apply {
                 putExtra("recipeId", recipe.id) // 레시피 ID만 전달
@@ -81,19 +76,24 @@ class MainPageActivity : AppCompatActivity() {
         }
         recyclerView.adapter = recipeAdapter
 
+        // 음성 검색 버튼 설정
+        findViewById<Button>(R.id.voiceSearchButton).setOnClickListener {
+            voiceSearchHelper.startVoiceRecognition()
+        }
+
         // SearchView 초기화 및 설정
         val searchView: SearchView = findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
+                searchRecipes(query) // 엔터를 쳤을 때 검색 수행
+                return true
             }
-
             override fun onQueryTextChange(newText: String?): Boolean {
-                filter(newText)
+                // 텍스트가 변경될 때는 아무 작업도 수행하지 않음
                 return true
             }
         })
-
+        
         // 재료 검색 버튼 설정
         findViewById<Button>(R.id.ingredientSearchButton).setOnClickListener {
             val userId = auth.currentUser?.uid
@@ -106,15 +106,15 @@ class MainPageActivity : AppCompatActivity() {
 
         // 모든 레시피 보기 버튼 설정
         findViewById<Button>(R.id.showAllRecipesButton).setOnClickListener {
-            showAllRecipes()
+            recipeAdapter.updateData(recipeList)
         }
     }
-
+    //메뉴 액션바
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
-
+    //메뉴 클릭 이벤트
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_add_ingredient -> {
@@ -138,35 +138,22 @@ class MainPageActivity : AppCompatActivity() {
         }
     }
 
-    private fun showAllRecipes() {
-        recipeAdapter.updateData(recipeList)
-    }
-
-    // 레시피 목록 읽기
-    private fun readRecipes(): MutableList<Recipe> {
-        return databaseHelper.readAllData().toMutableList()
-    }
-
-    // 레시피 필터링
-    private fun filter(query: String?) {
-        val filteredList = recipeList.filter { recipe ->
+    // 레시피 검색
+    private fun searchRecipes(query: String?) {
+        val filteredRecipes = recipeList.filter { recipe ->
             recipe.title.contains(query ?: "", ignoreCase = true)
         }.toMutableList()
 
-        if (filteredList.isEmpty()) {
+        if (filteredRecipes.isEmpty() && query != null && query.isNotBlank()) { // query가 null이나 공백이 아닌 경우에만 토스트 메시지 표시
             Toast.makeText(this, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        recipeAdapter.updateData(filteredList)
-    }
-
-    private fun searchRecipes(query: String) {
-        val filteredRecipes =
-            recipeList.filter { it.title.contains(query, ignoreCase = true) }.toMutableList()
         recipeAdapter.updateData(filteredRecipes)
-        Toast.makeText(this, "검색 결과: $query", Toast.LENGTH_SHORT).show()
+        if (query != null && query.isNotBlank()) { // query가 null이나 공백이 아닌 경우에만 토스트 메시지 표시
+            Toast.makeText(this, "검색 결과: $query", Toast.LENGTH_SHORT).show()
+        }
     }
-
+    //음성 인식 권한 처리
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -175,7 +162,7 @@ class MainPageActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         voiceSearchHelper.handlePermissionsResult(requestCode, grantResults)
     }
-
+    //액티비티 소멸시
     override fun onDestroy() {
         super.onDestroy()
         voiceSearchHelper.release()
