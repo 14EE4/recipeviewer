@@ -13,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.recipeviewer.R
-import com.example.recipeviewer.login.MainActivity
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -33,24 +32,23 @@ class RegisterActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
 
         // 뷰 참조
-        emailEditText = findViewById(R.id.editTextEmail)
-        passwordEditText = findViewById(R.id.editTextPassword)
-        confirmPasswordEditText = findViewById(R.id.editTextConfirmPassword)
-        registerButton = findViewById(R.id.registerButton)
+        emailEditText = findViewById(R.id.editTextEmail)//이메일
+        passwordEditText = findViewById(R.id.editTextPassword)//비번
+        confirmPasswordEditText = findViewById(R.id.editTextConfirmPassword)//비번확인
+        registerButton = findViewById(R.id.registerButton)//회원가입 버튼
 
-        // 이메일 입력 필드에 TextWatcher 추가
+        // 자동으로 @gmail.com 써지게
         emailEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val email = s.toString()
-                if (!email.endsWith("@gmail.com")) {
+                if (!email.endsWith("@gmail.com")) {//이메일은 지메일만 가능
                     val fixedEmail = email.replace("@gmail.com", "")
                     emailEditText.setText("$fixedEmail@gmail.com")
                     emailEditText.setSelection(fixedEmail.length)
                 }
             }
-
             override fun afterTextChanged(s: Editable?) {}
         })
 
@@ -65,7 +63,7 @@ class RegisterActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {//이메일 형식이 맞는지 확인
                 Toast.makeText(this, "유효한 이메일 주소를 입력하세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }

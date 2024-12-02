@@ -7,18 +7,17 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.app.DatePickerDialog
-
 import androidx.recyclerview.widget.RecyclerView
 import androidx.appcompat.app.AlertDialog
-import com.example.recipeviewer.models.Ingredient
-import kotlin.text.toIntOrNull
-import com.example.recipeviewer.helpers.DatabaseHelper
 import android.widget.*
-import androidx.compose.ui.semantics.text
+import kotlin.text.toIntOrNull
+import java.util.Calendar
+import com.example.recipeviewer.models.Ingredient
+import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.R
 import com.google.firebase.auth.FirebaseAuth
 
-import java.util.Calendar
+
 
 /**
  * AddIngredientActivity에서 재료를 보여주는 RecyclerView의 Adapter

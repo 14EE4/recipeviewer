@@ -39,8 +39,6 @@ class MainPageActivity : AppCompatActivity() {
     private lateinit var voiceSearchHelper: VoiceSearchHelper
     private lateinit var auth: FirebaseAuth
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -69,13 +67,8 @@ class MainPageActivity : AppCompatActivity() {
         // DatabaseHelper 초기화
         databaseHelper = DatabaseHelper(this)
 
-
-
         // 레시피 불러오기
         recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
-
-        // 레시피 재료를 집합으로 변환하고 로그로 출력
-        //logRecipeIngredients()
 
         // 클릭 리스너와 함께 어댑터 초기화
         val recipes = databaseHelper.readAllData().toMutableList() // List를 MutableList로 변환
@@ -233,20 +226,6 @@ class MainPageActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-            }
-        }
-
-        fun logRecipeIngredients() {
-            val allIngredientsSet = mutableSetOf<String>()
-
-            recipeList.forEach { recipe ->
-                val recipeIngredients = IngredientHelper.parseAllIngredients(recipe)
-                allIngredientsSet.addAll(recipeIngredients)
-            }
-
-            // 집합의 모든 재료를 로그로 출력
-            allIngredientsSet.forEach { ingredient ->
-                Log.d("AllIngredientsSet", ingredient)
             }
         }
     }

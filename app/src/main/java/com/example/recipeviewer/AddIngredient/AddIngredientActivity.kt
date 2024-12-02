@@ -8,12 +8,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.R
-import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.models.Ingredient
-import com.example.recipeviewer.helpers.VoiceSearchHelper
-import java.util.*
+import com.example.recipeviewer.helpers.*
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentReference
+import java.util.*
+
 
 /**
  * AddIngredientActivity는 사용자가 재료를 추가할 수 있는 액티비티입니다.
