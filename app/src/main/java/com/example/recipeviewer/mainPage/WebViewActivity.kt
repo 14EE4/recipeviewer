@@ -1,7 +1,6 @@
 package com.example.recipeviewer.mainPage
 
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.webkit.JavascriptInterface
@@ -13,6 +12,7 @@ import android.webkit.WebResourceError
 import android.widget.Toast
 import android.widget.Button
 import android.util.Log
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import com.example.recipeviewer.R
 import java.util.Locale
@@ -33,11 +33,14 @@ class WebViewActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_webview) // WebView 레이아웃으로 변경하세요
+        setContentView(R.layout.activity_webview)
 
-        webView = findViewById(R.id.webView) // 중복 제거
+        webView = findViewById(R.id.webView)
         ttsButton = findViewById(R.id.ttsButton)
         stopTtsButton = findViewById(R.id.stopTtsButton)
+
+        // 화면 꺼짐 방지 설정
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         webView.settings.javaScriptEnabled = true
         webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE // 캐시 비활성화
@@ -100,13 +103,35 @@ class WebViewActivity : AppCompatActivity() {
             }
         }
     }
-
+    //뒤로가기 버튼 눌렀을 떄
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack() // 이전 페이지로 이동
+            // 화면 꺼짐 방지 설정 해제
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
             super.onBackPressed() // 기본 동작 수행
         }
+    }
+    //포그라운드로 전환
+    override fun onResume() {
+        super.onResume()
+        // 화면 꺼짐 방지 설정 다시 활성화
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+    //백그라운드로 전환
+    override fun onPause() {
+        super.onPause()
+        // 화면 꺼짐 방지 설정 해제
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    //액티비티 소멸
+    override fun onDestroy() {
+        super.onDestroy()
+        webAppInterface.shutdownTts()
+        // 화면 꺼짐 방지 설정 해제
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     // JavaScript 인터페이스 클래스
@@ -156,11 +181,7 @@ class WebViewActivity : AppCompatActivity() {
             }
         }
     }
-    // WebViewActivity의 onDestroy() 메서드에서 shutdownTts() 호출
-    override fun onDestroy() {
-        super.onDestroy()
-        webAppInterface.shutdownTts()
-    }
+
 }
 
 
