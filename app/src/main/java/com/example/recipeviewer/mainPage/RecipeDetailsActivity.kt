@@ -1,10 +1,7 @@
-
 package com.example.recipeviewer.mainPage
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.ViewGroup
-import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TableLayout
@@ -12,14 +9,11 @@ import android.widget.TextView
 import android.widget.Toast
 import android.widget.TableRow
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.semantics.text
 import androidx.core.content.ContextCompat
-import androidx.core.view.setMargins
 import com.example.recipeviewer.R
 import com.example.recipeviewer.helpers.*
 import com.example.recipeviewer.models.Ingredient
 import com.google.firebase.auth.FirebaseAuth
-
 
 /**
  * MainPageActivity에서 레시피를 클릭했을 때 레시피 재료와 url버튼으로 레시피를 볼 수 있음(WebViewActivity)
@@ -29,17 +23,12 @@ import com.google.firebase.auth.FirebaseAuth
  */
 class RecipeDetailsActivity : AppCompatActivity() {
 
-    private lateinit var titleTextView: TextView
-    private lateinit var ingredientsTextView: TextView
-    private lateinit var urlButton: Button
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var auth: FirebaseAuth
-    private lateinit var ingredientTable: TableLayout
-    private lateinit var recipeIngredients: List<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_recipe_details) // activity_recipe_details.xml을 사용
+        setContentView(R.layout.activity_recipe_details)
 
         // FirebaseAuth 인스턴스 초기화
         auth = FirebaseAuth.getInstance()
@@ -53,9 +42,8 @@ class RecipeDetailsActivity : AppCompatActivity() {
         databaseHelper = DatabaseHelper(this)
 
         // 레시피 객체 가져오기
-        val recipe = databaseHelper.readRecipeById(recipeId) ?: run {
-            // 레시피를 찾을 수 없는 경우 처리
-            // 예: 오류 메시지 표시 후 액티비티 종료
+        val recipe = databaseHelper.readRecipeById(recipeId)
+        if(recipe == null){
             Toast.makeText(this, "레시피를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
             finish()
             return
@@ -63,12 +51,12 @@ class RecipeDetailsActivity : AppCompatActivity() {
 
         // 사용자 재료 가져오기
         databaseHelper.readIngredients(userId) { userIngredients: List<Ingredient> ->
-            // 레시피 재료 파싱 (extractName = false 추가)
+            // 레시피 재료 파싱
             val mainIngredients = IngredientHelper.parseIngredients(recipe.mainIngredients, extractName = false)
             val subIngredients = IngredientHelper.parseIngredients(recipe.subIngredients, extractName = false)
             val alternativeIngredients = IngredientHelper.parseIngredients(recipe.alternativeIngredients, extractName = false)
 
-            // 각 테이블 생성 및 추가 (파싱된 레시피 재료, userIngredients 사용)
+            // 각 테이블 생성 및 추가 (파싱된 레시피 재료, userIngredients 비교)
             val mainIngredientTable: TableLayout = findViewById(R.id.mainIngredientTable)
             mainIngredientTable.addView(createIngredientTable(mainIngredients, userIngredients))
 
@@ -81,10 +69,10 @@ class RecipeDetailsActivity : AppCompatActivity() {
 
         val recipeUrl = recipe.recipeUrl
 
-        // TextView에 제목 설정
+        // TextView 제목
         findViewById<TextView>(R.id.titleTextView).text = recipe.title
         
-        // URL 열기 버튼을 설정
+        // URL 열기 버튼
         findViewById<Button>(R.id.openUrlButton).setOnClickListener {
             val intent = Intent(this, WebViewActivity::class.java).apply {
                 putExtra("URL", recipeUrl)
@@ -93,10 +81,7 @@ class RecipeDetailsActivity : AppCompatActivity() {
         }
     }
 
-
-
-
-    // 테이블 생성 함수 (수정)
+    // 테이블 생성
     private fun createIngredientTable(
         recipeIngredients: List<String>,
         userIngredients: List<Ingredient>
@@ -143,8 +128,7 @@ class RecipeDetailsActivity : AppCompatActivity() {
         return tableLayout
     }
 
-    // 테이블에 재료 추가 함수 (수정)
-    // addIngredientsToTable 함수 수정
+    // 테이블에 재료 추가
     private fun addIngredientsToTable(
         tableLayout: TableLayout,
         recipeIngredients: List<String>,
@@ -160,10 +144,10 @@ class RecipeDetailsActivity : AppCompatActivity() {
                     TableRow.LayoutParams.WRAP_CONTENT,
                     1f
                 )
-                textSize = 20f // 폰트 크기 설정 (예: 20sp)
+                textSize = 20f
             }
             tableRow.addView(recipeIngredientTextView)
-
+            //사용자 재료
             val userIngredientTextView = TextView(this).apply {
                 val matchingUserIngredient = userIngredients.find { recipeIngredient.contains(it.name) }
                 // 분량과 단위 추가
@@ -180,15 +164,6 @@ class RecipeDetailsActivity : AppCompatActivity() {
                 textSize = 20f // 폰트 크기 설정 (예: 20sp)
             }
             tableRow.addView(userIngredientTextView)
-
-            // 세로선 추가
-            val verticalDivider = View(this)
-            verticalDivider.layoutParams = TableRow.LayoutParams(
-                1, // 세로선 두께 (예: 1px)
-                TableRow.LayoutParams.MATCH_PARENT
-            )
-            verticalDivider.setBackgroundColor(ContextCompat.getColor(this, android.R.color.darker_gray)) // 세로선 색상 설정
-            tableRow.addView(verticalDivider) // 세로선 추가
 
             tableLayout.addView(tableRow)
         }

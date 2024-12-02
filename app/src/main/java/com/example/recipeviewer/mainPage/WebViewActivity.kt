@@ -19,14 +19,14 @@ import java.util.Locale
 
 
 /**
+ * 레시피를 웹뷰로 보는 클래스
  * RecipeDetailsActivity에서 웹페이지로 이동 버튼 누르면 나옴
  *
- * @author
+ * @author 노평주
  */
 class WebViewActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
-    private lateinit var tts: TextToSpeech
     private lateinit var ttsButton: Button
     private lateinit var stopTtsButton: Button
     private lateinit var webAppInterface: WebAppInterface
@@ -35,9 +35,9 @@ class WebViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
 
-        webView = findViewById(R.id.webView)
-        ttsButton = findViewById(R.id.ttsButton)
-        stopTtsButton = findViewById(R.id.stopTtsButton)
+        webView = findViewById(R.id.webView)//웹뷰
+        ttsButton = findViewById(R.id.ttsButton)//tts재생
+        stopTtsButton = findViewById(R.id.stopTtsButton)//tts멈춤
 
         // 화면 꺼짐 방지 설정
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -48,7 +48,6 @@ class WebViewActivity : AppCompatActivity() {
         // WebAppInterface 객체 생성 및 초기화
         webAppInterface = WebAppInterface(this)
         webView.addJavascriptInterface(webAppInterface, "Android")
-
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -90,8 +89,8 @@ class WebViewActivity : AppCompatActivity() {
             }
         }
 
-        val url = intent.getStringExtra("URL") // Intent에서 URL을 가져옵니다.
-        webView.loadUrl(url ?: "https://www.example.com") // URL을 로드합니다.
+        val url = intent.getStringExtra("URL")
+        webView.loadUrl(url ?: "https://www.naver.com")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedError(
@@ -137,13 +136,12 @@ class WebViewActivity : AppCompatActivity() {
 
     // JavaScript 인터페이스 클래스
     class WebAppInterface(private val context: Context) {
-        private lateinit var tts: TextToSpeech // tts 변수를 멤버 변수로 선언
+        private lateinit var tts: TextToSpeech
 
         init {
             tts = TextToSpeech(context, TextToSpeech.OnInitListener { status ->
                 if (status == TextToSpeech.SUCCESS) {
                     // TTS 엔진 초기화 성공
-                    // 원하는 언어 설정 등 추가 작업 수행 가능
                 } else {
                     // TTS 엔진 초기화 실패
                     Log.e("WebAppInterface", "TTS initialization failed")
@@ -166,12 +164,12 @@ class WebViewActivity : AppCompatActivity() {
         }
 
         fun stopTts() {
-            Log.d("WebAppInterface", "stopTts called") // 로그 추가
+            Log.d("WebAppInterface", "stopTts called")
             if (::tts.isInitialized && tts.isSpeaking) { // TextToSpeech 객체 상태 확인
                 tts.stop()
-                Log.d("WebAppInterface", "tts.stop() called") // 로그 추가
+                Log.d("WebAppInterface", "tts.stop() called")
             } else {
-                Log.e("WebAppInterface", "tts is not initialized or not speaking") // 로그 추가
+                Log.e("WebAppInterface", "tts is not initialized or not speaking")
             }
         }
 
@@ -182,8 +180,4 @@ class WebViewActivity : AppCompatActivity() {
             }
         }
     }
-
 }
-
-
-
