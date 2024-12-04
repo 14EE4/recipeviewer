@@ -15,7 +15,10 @@ data class Recipe(
     val calories: String,
     val portions: String,
     val description: String,
-    val recipeUrl: String
+    val recipeUrl: String,
+
+    var isBookmarked: Boolean = false  // 북마크 상태
+
 )
 
 
