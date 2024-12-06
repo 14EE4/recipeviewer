@@ -53,3 +53,4 @@ class BookmarkManager(private val db: FirebaseFirestore = FirebaseFirestore.getI
             }
     }
 }
+

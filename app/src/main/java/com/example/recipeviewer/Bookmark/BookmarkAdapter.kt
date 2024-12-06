@@ -100,7 +100,7 @@ class BookmarkAdapter(
             val isBookmarked = document.exists()
             button.setTextColor(
                 button.context.getColor(
-                    if (isBookmarked) R.color.yellow else android.R.color.black // 별 색상 변경
+                    if (isBookmarked) R.color.yellow else android.R.color.black
                 )
             )
         }

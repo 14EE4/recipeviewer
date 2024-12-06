@@ -267,5 +267,4 @@ class MainPageActivity : AppCompatActivity() {
         recipeAdapter.updateData(updatedRecipes)
         Log.d("MainPageActivity", "onResume: 레시피 데이터 업데이트 완료")
     }
-
 }

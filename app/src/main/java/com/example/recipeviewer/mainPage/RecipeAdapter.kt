@@ -56,6 +56,7 @@ class RecipeAdapter(
                 itemClick(recipe) // 클릭 시 레시피 정보 전달
             }
         }
+        // 버튼 상태 변경
         private fun updateButtonState() {
             bookmarkButton.setTextColor(
                 bookmarkButton.context.getColor(

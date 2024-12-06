@@ -70,7 +70,6 @@ class BookmarkActivity : AppCompatActivity() {
     private fun loadBookmarks() {
         firestore.collection("users").document(userId)
             .collection("bookmarks")
-            .orderBy("id")
             .get() // 실시간 리스너 대신 단일 데이터 로드
             .addOnSuccessListener { snapshots ->
                 val newList = snapshots.map { document ->
@@ -110,19 +109,5 @@ class BookmarkActivity : AppCompatActivity() {
         }
 
         bookmarkAdapter.notifyDataSetChanged()
-    }
-
-    // 레시피 아이템 클릭 시 RecipeDetailsActivity로 이동
-    fun onRecipeClicked(bookmark: Bookmark) {
-        val intent = Intent(this, RecipeDetailsActivity::class.java)
-        intent.putExtra("RECIPE_ID", bookmark.id) // 북마크의 ID를 전달
-        startActivity(intent)
-    }
-
-    // 북마크 상태 변경 시 호출되는 메서드
-    private fun onBookmarkChanged() {
-        val intent = Intent()
-        setResult(RESULT_OK, intent) // 결과 코드 설정
-        finish() // Activity 종료
     }
 }

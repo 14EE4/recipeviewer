@@ -41,6 +41,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
+
     init {
         createDatabase()
     }
@@ -145,7 +146,8 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             subIngredientsIndex != -1 && alternativeIngredientsIndex != -1 &&
             cookingTimeIndex != -1 && caloriesIndex != -1 &&
             portionsIndex != -1 && descriptionIndex != -1 &&
-            recipeUrlIndex != -1) {
+            recipeUrlIndex != -1
+        ) {
 
             if (cursor.moveToFirst()) {
                 do {
@@ -172,9 +174,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return recipeList
     }
 
+    // 레시피ID로 레시피 찾아서 리턴
     fun readRecipeById(recipeId: Int): Recipe? {
         val db = this.readableDatabase
-        val cursor: Cursor = db.rawQuery("SELECT * FROM recipes WHERE id = ?", arrayOf(recipeId.toString()))
+        val cursor: Cursor =
+            db.rawQuery("SELECT * FROM recipes WHERE id = ?", arrayOf(recipeId.toString()))
 
         // 열 인덱스 확인
         val idIndex = cursor.getColumnIndex("id")
@@ -233,18 +237,27 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             "unit" to unit,
             "expiryDate" to expiryDate
         )
-        return firestore.collection("users").document(userId).collection("ingredients").add(ingredient)
+        return firestore.collection("users").document(userId).collection("ingredients")
+            .add(ingredient)
     }
 
     // 재료 수정
-    fun updateIngredient(userId: String, documentId: String, name: String, quantity: Int, unit: String, expiryDate: String): Task<Void> {
+    fun updateIngredient(
+        userId: String,
+        documentId: String,
+        name: String,
+        quantity: Int,
+        unit: String,
+        expiryDate: String
+    ): Task<Void> {
         val ingredient = hashMapOf(
             "name" to name,
             "quantity" to quantity,
             "unit" to unit,
             "expiryDate" to expiryDate
         )
-        return firestore.collection("users").document(userId).collection("ingredients").document(documentId).set(ingredient) // documentId 사용
+        return firestore.collection("users").document(userId).collection("ingredients")
+            .document(documentId).set(ingredient) // documentId 사용
             .addOnSuccessListener {
                 Log.d("DatabaseHelper", "Ingredient updated with ID: $documentId")
             }.addOnFailureListener { e ->
@@ -255,40 +268,44 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
 
     // 재료 목록 초기화
     fun clearIngredients(userId: String): Task<QuerySnapshot> {
-        return firestore.collection("users").document(userId).collection("ingredients").get().addOnSuccessListener { result ->
-            for (document in result) {
-                firestore.collection("users").document(userId).collection("ingredients").document(document.id).delete()
-            }
-            Log.d("DatabaseHelper", "All ingredients cleared")
-        }.addOnFailureListener { e ->
+        return firestore.collection("users").document(userId).collection("ingredients").get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    firestore.collection("users").document(userId).collection("ingredients")
+                        .document(document.id).delete()
+                }
+                Log.d("DatabaseHelper", "All ingredients cleared")
+            }.addOnFailureListener { e ->
             Log.e("DatabaseHelper", "Error clearing ingredients", e)
         }
     }
 
     // 재료 목록 읽기
     fun readIngredients(userId: String, callback: (List<Ingredient>) -> Unit) {
-        firestore.collection("users").document(userId).collection("ingredients").get().addOnSuccessListener { result ->
-            val ingredients = mutableListOf<Ingredient>()
-            for (document in result) {
-                val ingredient = Ingredient(
-                    id = document.id, // Firestore 문서 ID를 직접 사용
-                    name = document.getString("name") ?: "",
-                    quantity = document.getLong("quantity")?.toInt() ?: 0,
-                    unit = document.getString("unit") ?: "",
-                    expiryDate = document.getString("expiryDate") ?: ""
-                )
-                ingredients.add(ingredient)
-            }
-            callback(ingredients)
-            Log.d("DatabaseHelper", "Ingredients: $ingredients")
-        }.addOnFailureListener { e ->
+        firestore.collection("users").document(userId).collection("ingredients").get()
+            .addOnSuccessListener { result ->
+                val ingredients = mutableListOf<Ingredient>()
+                for (document in result) {
+                    val ingredient = Ingredient(
+                        id = document.id, // Firestore 문서 ID를 직접 사용
+                        name = document.getString("name") ?: "",
+                        quantity = document.getLong("quantity")?.toInt() ?: 0,
+                        unit = document.getString("unit") ?: "",
+                        expiryDate = document.getString("expiryDate") ?: ""
+                    )
+                    ingredients.add(ingredient)
+                }
+                callback(ingredients)
+                Log.d("DatabaseHelper", "Ingredients: $ingredients")
+            }.addOnFailureListener { e ->
             Log.e("DatabaseHelper", "Error getting ingredients", e)
         }
     }
 
     // 재료 삭제
     fun deleteIngredient(userId: String, documentId: String): Task<Void> { // documentId 매개변수 사용
-        return firestore.collection("users").document(userId).collection("ingredients").document(documentId).delete() // documentId 사용
+        return firestore.collection("users").document(userId).collection("ingredients")
+            .document(documentId).delete() // documentId 사용
             .addOnSuccessListener {
                 Log.d("DatabaseHelper", "Ingredient deleted with ID: $documentId")
             }.addOnFailureListener { e ->
@@ -296,9 +313,14 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
     }
 
-    fun addExcludedIngredient(userId: String, name: String, callback: (() -> Unit)? = null): Task<Void> { // 콜백 추가
+    fun addExcludedIngredient(
+        userId: String,
+        name: String,
+        callback: (() -> Unit)? = null
+    ): Task<Void> { // 콜백 추가
         val data = hashMapOf("name" to name)
-        return firestore.collection("users").document(userId).collection("excludedIngredients").document(name).set(data)
+        return firestore.collection("users").document(userId).collection("excludedIngredients")
+            .document(name).set(data)
             .addOnSuccessListener {
                 // Firestore에 데이터 추가 성공 후 콜백 함수 호출
                 callback?.invoke()
@@ -337,4 +359,5 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
                 callback(false) // 삭제 실패 시 false 전달
             }
     }
+
 }

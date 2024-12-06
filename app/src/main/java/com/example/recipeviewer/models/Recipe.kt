@@ -18,7 +18,6 @@ data class Recipe(
     val recipeUrl: String,
 
     var isBookmarked: Boolean = false  // 북마크 상태
-
 )
 
 

@@ -19,3 +19,4 @@ class BookmarkDiffCallback(
         return oldList[oldItemPosition] == newList[newItemPosition]
     }
 }
+
