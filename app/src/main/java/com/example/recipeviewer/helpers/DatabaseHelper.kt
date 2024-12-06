@@ -1,20 +1,16 @@
 package com.example.recipeviewer.helpers
 
-import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import android.widget.Toast
-import com.example.recipeviewer.models.Bookmark
 import com.example.recipeviewer.models.Ingredient
 import com.example.recipeviewer.models.Recipe
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -40,19 +36,10 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val COLUMN_EXCLUDED_INGREDIENT_ID = "id"
         private const val COLUMN_EXCLUDED_INGREDIENT_NAME = "name"
 
-        // 북마크 테이블
-        private const val TABLE_BOOKMARKS = "bookmarks"
-        private const val COLUMN_BOOKMARK_ID = "id"
-        private const val COLUMN_BOOKMARK_TITLE = "title"
-        private const val COLUMN_BOOKMARK_DESCRIPTION = "description"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
-
-
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val userId: String = auth.currentUser?.uid ?: ""
 
     init {
         createDatabase()
@@ -125,14 +112,6 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         """
         db.execSQL(createExcludedIngredientsTable)
 
-        val createBookmarksTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_BOOKMARKS (
-                $COLUMN_BOOKMARK_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COLUMN_BOOKMARK_TITLE TEXT NOT NULL,
-                $COLUMN_BOOKMARK_DESCRIPTION TEXT NOT NULL
-            )
-        """
-        db.execSQL(createBookmarksTable)
     }
 
 
@@ -349,83 +328,13 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
 
 
     fun deleteExcludedIngredient(userId: String, name: String, callback: (Boolean) -> Unit) {
-        firestore.collection("users").document(userId).collection("excludedIngredients").document(name).delete()
+        firestore.collection("users").document(userId).collection("excludedIngredients")
+            .document(name).delete()
             .addOnSuccessListener {
                 callback(true) // 삭제 성공 시 true 전달
             }
             .addOnFailureListener {
                 callback(false) // 삭제 실패 시 false 전달
-            }
-    }
-
-    // 북마크 추가 기능
-    fun addBookmark(userId: String, title: String, description: String, callback: (Boolean) -> Unit) {
-        val bookmarkCollection = firestore.collection("users").document(userId).collection("bookmarks")
-
-        bookmarkCollection.whereEqualTo("title", title).get()
-            .addOnSuccessListener { result ->
-                if (result.isEmpty) {
-                    val bookmark = mapOf(
-                        "title" to title,
-                        "description" to description
-                    )
-                    bookmarkCollection.add(bookmark)
-                        .addOnSuccessListener {
-                        callback(true)
-                    }.addOnFailureListener {
-                        callback(false)
-                    }
-                } else {
-                    callback(false)
-                }
-            }
-            .addOnFailureListener {
-                callback(false)
-            }
-    }
-
-    // 북마크 불러오기
-    fun getBookmarks(userId: String, callback: (List<Bookmark>) -> Unit) {
-        firestore.collection("users").document(userId).collection("bookmarks").get()
-            .addOnSuccessListener { result ->
-                val bookmarks = result.mapNotNull { document ->
-                    Bookmark(
-                        id = document.id,
-                        title = document.getString("title") ?: "",
-                        description = document.getString("description") ?: ""
-                    )
-                }
-                callback(bookmarks)
-            }
-            .addOnFailureListener { exception ->
-                Log.e("DatabaseHelper", "Error getting bookmarks.", exception)
-                callback(emptyList())
-            }
-    }
-
-    // 북마크 업데이트
-    fun updateBookmark(userId: String, bookmarkId: String, title: String, description: String, callback: (Boolean) -> Unit) {
-        val bookmark = mapOf(
-            "title" to title,
-            "description" to description
-        )
-        firestore.collection("users").document(userId).collection("bookmarks").document(bookmarkId).set(bookmark)
-            .addOnSuccessListener {
-                callback(true)
-            }
-            .addOnFailureListener {
-                callback(false)
-            }
-    }
-
-    // 북마크 삭제
-    fun deleteBookmark(userId: String, bookmarkId: String, callback: (Boolean) -> Unit) {
-        firestore.collection("users").document(userId).collection("bookmarks").document(bookmarkId).delete()
-            .addOnSuccessListener {
-                callback(true)
-            }
-            .addOnFailureListener {
-                callback(false)
             }
     }
 }

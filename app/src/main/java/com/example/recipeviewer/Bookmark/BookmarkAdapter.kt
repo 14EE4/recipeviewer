@@ -20,8 +20,8 @@ class BookmarkAdapter(
 ) : RecyclerView.Adapter<BookmarkAdapter.BookmarkViewHolder>() {
 
     inner class BookmarkViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val titleText: TextView = view.findViewById(R.id.bookmarkTitle)
-        val starButton: Button = view.findViewById(R.id.bookmarkButton)
+        private val titleText: TextView = view.findViewById(R.id.bookmarkTitle)
+        private val starButton: Button = view.findViewById(R.id.bookmarkButton)
 
         fun bind(bookmark: Bookmark) {
             titleText.text = bookmark.title

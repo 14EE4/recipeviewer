@@ -70,6 +70,7 @@ class BookmarkActivity : AppCompatActivity() {
     private fun loadBookmarks() {
         firestore.collection("users").document(userId)
             .collection("bookmarks")
+            .orderBy("id")
             .get() // 실시간 리스너 대신 단일 데이터 로드
             .addOnSuccessListener { snapshots ->
                 val newList = snapshots.map { document ->
