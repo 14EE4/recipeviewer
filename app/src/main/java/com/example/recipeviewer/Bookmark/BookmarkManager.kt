@@ -19,7 +19,7 @@ class BookmarkManager(private val db: FirebaseFirestore = FirebaseFirestore.getI
         // 사용자의 북마크 컬렉션에 저장
         db.collection("users").document(userId).collection("bookmarks").document(recipe.id.toString()).set(bookmark)
             .addOnSuccessListener {
-                Toast.makeText(context, "북마크에 추가됨", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "북마크에 추가되었습니다.", Toast.LENGTH_SHORT).show()
                 onComplete()
             }
             .addOnFailureListener { exception ->
@@ -33,7 +33,7 @@ class BookmarkManager(private val db: FirebaseFirestore = FirebaseFirestore.getI
         // 사용자의 북마크 컬렉션에서 삭제
         db.collection("users").document(userId).collection("bookmarks").document(recipeId).delete()
             .addOnSuccessListener {
-                Toast.makeText(context, "북마크에서 제거됨", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "북마크에서 제거되었습니다.", Toast.LENGTH_SHORT).show()
                 onComplete()
             }
             .addOnFailureListener {

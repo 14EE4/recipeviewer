@@ -95,11 +95,12 @@ class BookmarkAdapter(
         val bookmarkRef = db.collection("users").document(userId)
             .collection("bookmarks").document(bookmark.id)
 
+        // 북마크가 존재하는지 확인
         bookmarkRef.get().addOnSuccessListener { document ->
             val isBookmarked = document.exists()
             button.setTextColor(
                 button.context.getColor(
-                    if (isBookmarked) R.color.yellow else android.R.color.black
+                    if (isBookmarked) R.color.yellow else android.R.color.black // 별 색상 변경
                 )
             )
         }

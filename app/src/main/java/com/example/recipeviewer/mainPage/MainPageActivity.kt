@@ -254,4 +254,18 @@ class MainPageActivity : AppCompatActivity() {
             }
         }
     }
+
+    // 재료 목록 초기화
+    override fun onResume() {
+        super.onResume()
+        updateRecipes() // 최신 데이터 갱신
+    }
+
+    // 재료 목록 업데이트
+    private fun updateRecipes() {
+        val updatedRecipes = databaseHelper.readAllData().toMutableList()
+        recipeAdapter.updateData(updatedRecipes)
+        Log.d("MainPageActivity", "onResume: 레시피 데이터 업데이트 완료")
+    }
+
 }

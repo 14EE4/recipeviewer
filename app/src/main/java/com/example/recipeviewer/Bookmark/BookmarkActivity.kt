@@ -33,6 +33,7 @@ class BookmarkActivity : AppCompatActivity() {
         firestore = FirebaseFirestore.getInstance()
         val currentUser = auth.currentUser
 
+        // 로그인 여부 확인
         if (currentUser == null) {
             Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show()
             finish()
@@ -41,11 +42,13 @@ class BookmarkActivity : AppCompatActivity() {
 
         userId = currentUser.uid
 
+        // 북마크 리사이클러뷰 설정
         bookmarkRecyclerView = findViewById(R.id.recyclerViewBookmark)
         bookmarkRecyclerView.layoutManager = LinearLayoutManager(this)
         bookmarkAdapter = BookmarkAdapter(filteredList, firestore, userId)
         bookmarkRecyclerView.adapter = bookmarkAdapter
 
+        // 검색 뷰 초기화
         searchView = findViewById(R.id.searchViewBookmark)
 
         // 검색 뷰 리스너 설정
@@ -115,4 +118,10 @@ class BookmarkActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    // 북마크 상태 변경 시 호출되는 메서드
+    private fun onBookmarkChanged() {
+        val intent = Intent()
+        setResult(RESULT_OK, intent) // 결과 코드 설정
+        finish() // Activity 종료
+    }
 }

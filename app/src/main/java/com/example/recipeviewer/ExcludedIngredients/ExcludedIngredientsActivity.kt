@@ -67,8 +67,6 @@ class ExcludedIngredientsActivity : AppCompatActivity() {
             }
         }
 
-// ...
-
         // Firebase Firestore에서 제외 재료 로드
         loadExcludedIngredients()
     }
