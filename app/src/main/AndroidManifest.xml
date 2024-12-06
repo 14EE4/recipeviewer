@@ -14,7 +14,10 @@
         android:theme="@style/Theme.Recipeviewer"
         tools:targetApi="31">
 
-        <!-- 로그인 -->
+        <!-- RegisterActivity 선언 -->
+        <activity android:name=".login.RegisterActivity" />
+
+        <!-- 다른 액티비티 선언 -->
         <activity android:name=".login.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
@@ -24,17 +27,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- 회원가입 -->
-        <activity android:name=".login.RegisterActivity" />
-        <!-- 메인 페이지 -->
-        <activity android:name=".mainPage.MainPageActivity" />
-        <!-- 레시피 상세정보 -->
-        <activity android:name=".mainPage.RecipeDetailsActivity" />
-        <!-- 레시피 웹뷰 -->
+
         <activity android:name=".mainPage.WebViewActivity" />
-        <!-- 재료추가 -->
+        <activity android:name=".mainPage.RecipeDetailsActivity" />
+        <activity android:name=".mainPage.MainPageActivity" />
         <activity android:name=".AddIngredient.AddIngredientActivity" />
-        <!-- 제외재료추가 -->
-        <activity android:name=".ExcludedIngredients.ExcludedIngredientsActivity" />
+        <activity
+            android:name=".ExcludedIngredients.ExcludedIngredientsActivity"
+            android:exported="false" />
+        <activity android:name=".Bookmark.BookmarkActivity"
+            android:exported="true" />
     </application>
 </manifest>

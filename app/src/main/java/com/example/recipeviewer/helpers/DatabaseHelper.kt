@@ -1,16 +1,20 @@
 package com.example.recipeviewer.helpers
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import android.widget.Toast
+import com.example.recipeviewer.models.Bookmark
 import com.example.recipeviewer.models.Ingredient
 import com.example.recipeviewer.models.Recipe
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -20,7 +24,7 @@ import java.io.IOException
  * 레시피 데이터베이스는 assets 폴더에 있는 recipes.db를 사용
  * 이 클래스는 SQLiteOpenHelper를 상속받아 데이터베이스 생성 및 관리
  * recipes.db를 복사하여 사용
- * 재료 추가 수정 삭제 초기화, 회원가입은 Firestore에서 처리
+ * 재료 추가 수정 삭제 초기화는 Firestore에서 처리
  * 
  * @author 노평주
  */
@@ -30,10 +34,25 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val DATABASE_NAME = "recipes.db" // 데이터베이스 이름
         private const val DATABASE_VERSION = 1 // 데이터베이스 버전
         private const val ASSET_DB_PATH = "databases/$DATABASE_NAME"
+
+        //제외 재료 테이블
+        private const val TABLE_EXCLUDED_INGREDIENTS = "excluded_ingredients"
+        private const val COLUMN_EXCLUDED_INGREDIENT_ID = "id"
+        private const val COLUMN_EXCLUDED_INGREDIENT_NAME = "name"
+
+        // 북마크 테이블
+        private const val TABLE_BOOKMARKS = "bookmarks"
+        private const val COLUMN_BOOKMARK_ID = "id"
+        private const val COLUMN_BOOKMARK_TITLE = "title"
+        private const val COLUMN_BOOKMARK_DESCRIPTION = "description"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+
+
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val userId: String = auth.currentUser?.uid ?: ""
 
     init {
         createDatabase()
@@ -55,9 +74,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             Log.d("DatabaseHelper", "데이터베이스가 이미 존재합니다.")
         }
 
-        // 테이블 생성
+        // 데이터베이스가 존재하든 존재하지 않든 테이블을 생성합니다.
         val db = writableDatabase
+        createTables(db)
         db.close()
+
     }
 
     private fun checkDatabaseExists(): Boolean {
@@ -66,7 +87,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         Log.d("DatabaseHelper", "데이터베이스 존재 여부: $exists, 경로: $dbPath, 파일 크기: ${dbFile.length()}")
         return exists
     }
-    //레시피 데이터베이스 복사
+
     private fun copyDatabase() {
         val dbPath = context.getDatabasePath(DATABASE_NAME).absolutePath
 
@@ -93,7 +114,36 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         }
     }
 
-    //모든 레시피 읽어서 리스트로 리턴
+    private fun createTables(db: SQLiteDatabase) {
+
+
+        val createExcludedIngredientsTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_EXCLUDED_INGREDIENTS (
+                $COLUMN_EXCLUDED_INGREDIENT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_EXCLUDED_INGREDIENT_NAME TEXT NOT NULL UNIQUE
+            )
+        """
+        db.execSQL(createExcludedIngredientsTable)
+
+        val createBookmarksTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_BOOKMARKS (
+                $COLUMN_BOOKMARK_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_BOOKMARK_TITLE TEXT NOT NULL,
+                $COLUMN_BOOKMARK_DESCRIPTION TEXT NOT NULL
+            )
+        """
+        db.execSQL(createBookmarksTable)
+    }
+
+
+    override fun onCreate(db: SQLiteDatabase?) {
+        // onCreate 메서드는 비워둡니다.
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+        // 데이터베이스 버전 업그레이드 시 필요한 작업
+    }
+
     fun readAllData(): MutableList<Recipe> {
         val recipeList = mutableListOf<Recipe>()
         val db = this.readableDatabase
@@ -142,7 +192,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         cursor.close()
         return recipeList
     }
-    //레시피ID로 레시피 찾아서 리턴
+
     fun readRecipeById(recipeId: Int): Recipe? {
         val db = this.readableDatabase
         val cursor: Cursor = db.rawQuery("SELECT * FROM recipes WHERE id = ?", arrayOf(recipeId.toString()))
@@ -190,7 +240,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         db.close()
         return recipe
     }
-    //firestore에 재료 추가
+
     fun addIngredient(
         userId: String,
         name: String,
@@ -281,6 +331,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
     }
 
     // 제외 재료 목록 불러오기
+    // DatabaseHelper.kt
     fun getExcludedIngredients(userId: String, callback: (List<String>) -> Unit) {
         firestore.collection("users").document(userId).collection("excludedIngredients").get()
             .addOnSuccessListener { documents ->
@@ -296,6 +347,7 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
     }
 
+
     fun deleteExcludedIngredient(userId: String, name: String, callback: (Boolean) -> Unit) {
         firestore.collection("users").document(userId).collection("excludedIngredients").document(name).delete()
             .addOnSuccessListener {
@@ -306,11 +358,74 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
     }
 
-    override fun onCreate(p0: SQLiteDatabase?) {
+    // 북마크 추가 기능
+    fun addBookmark(userId: String, title: String, description: String, callback: (Boolean) -> Unit) {
+        val bookmarkCollection = firestore.collection("users").document(userId).collection("bookmarks")
 
+        bookmarkCollection.whereEqualTo("title", title).get()
+            .addOnSuccessListener { result ->
+                if (result.isEmpty) {
+                    val bookmark = mapOf(
+                        "title" to title,
+                        "description" to description
+                    )
+                    bookmarkCollection.add(bookmark)
+                        .addOnSuccessListener {
+                        callback(true)
+                    }.addOnFailureListener {
+                        callback(false)
+                    }
+                } else {
+                    callback(false)
+                }
+            }
+            .addOnFailureListener {
+                callback(false)
+            }
     }
 
-    override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
+    // 북마크 불러오기
+    fun getBookmarks(userId: String, callback: (List<Bookmark>) -> Unit) {
+        firestore.collection("users").document(userId).collection("bookmarks").get()
+            .addOnSuccessListener { result ->
+                val bookmarks = result.mapNotNull { document ->
+                    Bookmark(
+                        id = document.id,
+                        title = document.getString("title") ?: "",
+                        description = document.getString("description") ?: ""
+                    )
+                }
+                callback(bookmarks)
+            }
+            .addOnFailureListener { exception ->
+                Log.e("DatabaseHelper", "Error getting bookmarks.", exception)
+                callback(emptyList())
+            }
+    }
 
+    // 북마크 업데이트
+    fun updateBookmark(userId: String, bookmarkId: String, title: String, description: String, callback: (Boolean) -> Unit) {
+        val bookmark = mapOf(
+            "title" to title,
+            "description" to description
+        )
+        firestore.collection("users").document(userId).collection("bookmarks").document(bookmarkId).set(bookmark)
+            .addOnSuccessListener {
+                callback(true)
+            }
+            .addOnFailureListener {
+                callback(false)
+            }
+    }
+
+    // 북마크 삭제
+    fun deleteBookmark(userId: String, bookmarkId: String, callback: (Boolean) -> Unit) {
+        firestore.collection("users").document(userId).collection("bookmarks").document(bookmarkId).delete()
+            .addOnSuccessListener {
+                callback(true)
+            }
+            .addOnFailureListener {
+                callback(false)
+            }
     }
 }

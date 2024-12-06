@@ -9,13 +9,13 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.geometry.isEmpty
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.example.recipeviewer.helpers.VoiceSearchHelper
 import com.example.recipeviewer.models.Recipe
 import com.example.recipeviewer.AddIngredient.AddIngredientActivity
+import com.example.recipeviewer.Bookmark.BookmarkActivity
 import com.example.recipeviewer.login.MainActivity
 import com.example.recipeviewer.R
 import com.example.recipeviewer.ExcludedIngredients.ExcludedIngredientsActivity
@@ -56,6 +56,11 @@ class MainPageActivity : AppCompatActivity() {
             searchRecipes(query)
         }
 
+        // 음성 검색 버튼 설정
+        findViewById<Button>(R.id.voiceSearchButton).setOnClickListener {
+            voiceSearchHelper.startVoiceRecognition()
+        }
+
         // RecyclerView 초기화
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -63,11 +68,18 @@ class MainPageActivity : AppCompatActivity() {
         // DatabaseHelper 초기화
         databaseHelper = DatabaseHelper(this)
 
+
+
         // 레시피 불러오기
-        recipeList = databaseHelper.readAllData()
+        recipeList = readRecipes().toMutableList() // List를 MutableList로 변환
+
+        // 레시피 재료를 집합으로 변환하고 로그로 출력
+        //logRecipeIngredients()
 
         // 클릭 리스너와 함께 어댑터 초기화
-        recipeAdapter = RecipeAdapter(recipeList) { recipe ->
+        val recipes = databaseHelper.readAllData().toMutableList() // List를 MutableList로 변환
+
+        recipeAdapter = RecipeAdapter(recipes, userId ?:"") { recipe ->
             val intent = Intent(this, RecipeDetailsActivity::class.java).apply {
                 putExtra("recipeId", recipe.id) // 레시피 ID만 전달
             }
@@ -75,24 +87,19 @@ class MainPageActivity : AppCompatActivity() {
         }
         recyclerView.adapter = recipeAdapter
 
-        // 음성 검색 버튼 설정
-        findViewById<Button>(R.id.voiceSearchButton).setOnClickListener {
-            voiceSearchHelper.startVoiceRecognition()
-        }
-
         // SearchView 초기화 및 설정
         val searchView: SearchView = findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                searchRecipes(query) // 엔터를 쳤을 때 검색 수행
-                return true
+                return false
             }
+
             override fun onQueryTextChange(newText: String?): Boolean {
-                // 텍스트가 변경될 때는 아무 작업도 수행하지 않음
+                filter(newText)
                 return true
             }
         })
-        
+
         // 재료 검색 버튼 설정
         findViewById<Button>(R.id.ingredientSearchButton).setOnClickListener {
             val userId = auth.currentUser?.uid
@@ -105,15 +112,15 @@ class MainPageActivity : AppCompatActivity() {
 
         // 모든 레시피 보기 버튼 설정
         findViewById<Button>(R.id.showAllRecipesButton).setOnClickListener {
-            recipeAdapter.updateData(recipeList)
+            showAllRecipes()
         }
     }
-    //메뉴 액션바
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
-    //메뉴 클릭 이벤트
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_add_ingredient -> {
@@ -124,6 +131,11 @@ class MainPageActivity : AppCompatActivity() {
             R.id.action_excluded_ingredients -> {
                 // 제외 재료 화면으로 이동
                 startActivity(Intent(this, ExcludedIngredientsActivity::class.java))
+                true
+            }
+            R.id.action_bookmark -> {
+                // 북마크 화면으로 이동
+                startActivity(Intent(this, BookmarkActivity::class.java))
                 true
             }
             R.id.action_logout -> {
@@ -137,22 +149,35 @@ class MainPageActivity : AppCompatActivity() {
         }
     }
 
-    // 레시피 검색
-    private fun searchRecipes(query: String?) {
-        val filteredRecipes = recipeList.filter { recipe ->
+    private fun showAllRecipes() {
+        recipeAdapter.updateData(recipeList)
+    }
+
+    // 레시피 목록 읽기
+    private fun readRecipes(): MutableList<Recipe> {
+        return databaseHelper.readAllData().toMutableList()
+    }
+
+    // 레시피 필터링
+    private fun filter(query: String?) {
+        val filteredList = recipeList.filter { recipe ->
             recipe.title.contains(query ?: "", ignoreCase = true)
         }.toMutableList()
 
-        if (filteredRecipes.isEmpty() && query != null && query.isNotBlank()) { // query가 null이나 공백이 아닌 경우에만 토스트 메시지 표시
+        if (filteredList.isEmpty()) {
             Toast.makeText(this, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        recipeAdapter.updateData(filteredRecipes)
-        if (query != null && query.isNotBlank()) { // query가 null이나 공백이 아닌 경우에만 토스트 메시지 표시
-            Toast.makeText(this, "검색 결과: $query", Toast.LENGTH_SHORT).show()
-        }
+        recipeAdapter.updateData(filteredList)
     }
-    //음성 인식 권한 처리
+
+    private fun searchRecipes(query: String) {
+        val filteredRecipes =
+            recipeList.filter { it.title.contains(query, ignoreCase = true) }.toMutableList()
+        recipeAdapter.updateData(filteredRecipes)
+        Toast.makeText(this, "검색 결과: $query", Toast.LENGTH_SHORT).show()
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -161,7 +186,7 @@ class MainPageActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         voiceSearchHelper.handlePermissionsResult(requestCode, grantResults)
     }
-    //액티비티 소멸시
+
     override fun onDestroy() {
         super.onDestroy()
         voiceSearchHelper.release()
@@ -212,6 +237,20 @@ class MainPageActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+            }
+        }
+
+        fun logRecipeIngredients() {
+            val allIngredientsSet = mutableSetOf<String>()
+
+            recipeList.forEach { recipe ->
+                val recipeIngredients = IngredientHelper.parseAllIngredients(recipe)
+                allIngredientsSet.addAll(recipeIngredients)
+            }
+
+            // 집합의 모든 재료를 로그로 출력
+            allIngredientsSet.forEach { ingredient ->
+                Log.d("AllIngredientsSet", ingredient)
             }
         }
     }
