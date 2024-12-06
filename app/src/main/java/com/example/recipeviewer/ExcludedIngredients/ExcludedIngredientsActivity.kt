@@ -1,14 +1,18 @@
 package com.example.recipeviewer.ExcludedIngredients
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.size
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.recipeviewer.R
 import com.example.recipeviewer.helpers.DatabaseHelper
 import com.google.firebase.auth.FirebaseAuth // Firebase Authentication import
+import com.google.firebase.firestore.FirebaseFirestore // Firebase Firestore import
 
 class ExcludedIngredientsActivity : AppCompatActivity() {
 
@@ -62,6 +66,8 @@ class ExcludedIngredientsActivity : AppCompatActivity() {
                 Toast.makeText(this, "제외할 재료를 입력하세요.", Toast.LENGTH_SHORT).show()
             }
         }
+
+// ...
 
         // Firebase Firestore에서 제외 재료 로드
         loadExcludedIngredients()
