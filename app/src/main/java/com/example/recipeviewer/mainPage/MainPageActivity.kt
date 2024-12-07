@@ -194,9 +194,10 @@ class MainPageActivity : AppCompatActivity() {
 
     private fun searchAndSortRecipesByIngredients(userId: String) {
         databaseHelper.readIngredients(userId) { ingredientList ->
-            databaseHelper.getExcludedIngredients(userId) { excludedIngredientList: List<String> -> // SQLite에서 제외 재료 목록 가져오기
+            databaseHelper.getExcludedIngredients(userId) { excludedIngredientList: List<String> ->
 
                 val matchingRecipes = recipeList.map { recipe ->
+                    // IngredientHelper를 사용하여 현재 레시피에서 재료 목록을 추출
                     val recipeIngredients =
                         IngredientHelper.parseAllIngredients(recipe) // IngredientHelper 사용
                     val commonIngredientsCount = recipeIngredients.count { recipeIngredient ->
@@ -214,6 +215,7 @@ class MainPageActivity : AppCompatActivity() {
                             ) // excludedIngredient를 직접 사용
                         }
                     }
+                    // 공통 재료 개수 - 제외 재료 개수
                     val finalCount = commonIngredientsCount - excludedIngredientsCount
 
                     // Logcat에 출력
@@ -253,5 +255,18 @@ class MainPageActivity : AppCompatActivity() {
                 Log.d("AllIngredientsSet", ingredient)
             }
         }
+    }
+
+    // 재료 목록 초기화
+    override fun onResume() {
+        super.onResume()
+        updateRecipes() // 최신 데이터 갱신
+    }
+
+    // 재료 목록 업데이트
+    private fun updateRecipes() {
+        val updatedRecipes = databaseHelper.readAllData().toMutableList()
+        recipeAdapter.updateData(updatedRecipes)
+        Log.d("MainPageActivity", "onResume: 레시피 데이터 업데이트 완료")
     }
 }

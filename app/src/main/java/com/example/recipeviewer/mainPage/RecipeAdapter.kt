@@ -16,7 +16,7 @@ import com.example.recipeviewer.utils.BookmarkManager
  * @author 노평주
  */
 class RecipeAdapter(
-    private var recipes: List<Recipe>,
+    var recipes: List<Recipe>,
     private var userId: String,
     private val itemClick: (Recipe) -> Unit // 레시피 클릭 시 호출되는 함수
 ) : RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {
@@ -56,6 +56,7 @@ class RecipeAdapter(
                 itemClick(recipe) // 클릭 시 레시피 정보 전달
             }
         }
+        // 버튼 상태 변경
         private fun updateButtonState() {
             bookmarkButton.setTextColor(
                 bookmarkButton.context.getColor(

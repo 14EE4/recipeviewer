@@ -1,20 +1,16 @@
 package com.example.recipeviewer.helpers
 
-import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import android.widget.Toast
-import com.example.recipeviewer.models.Bookmark
 import com.example.recipeviewer.models.Ingredient
 import com.example.recipeviewer.models.Recipe
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -40,19 +36,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         private const val COLUMN_EXCLUDED_INGREDIENT_ID = "id"
         private const val COLUMN_EXCLUDED_INGREDIENT_NAME = "name"
 
-        // 북마크 테이블
-        private const val TABLE_BOOKMARKS = "bookmarks"
-        private const val COLUMN_BOOKMARK_ID = "id"
-        private const val COLUMN_BOOKMARK_TITLE = "title"
-        private const val COLUMN_BOOKMARK_DESCRIPTION = "description"
     }
 
     private val dbPath: String = context.getDatabasePath(DATABASE_NAME).absolutePath
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
-
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val userId: String = auth.currentUser?.uid ?: ""
 
     init {
         createDatabase()
@@ -125,14 +113,6 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         """
         db.execSQL(createExcludedIngredientsTable)
 
-        val createBookmarksTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_BOOKMARKS (
-                $COLUMN_BOOKMARK_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COLUMN_BOOKMARK_TITLE TEXT NOT NULL,
-                $COLUMN_BOOKMARK_DESCRIPTION TEXT NOT NULL
-            )
-        """
-        db.execSQL(createBookmarksTable)
     }
 
 
@@ -166,7 +146,8 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             subIngredientsIndex != -1 && alternativeIngredientsIndex != -1 &&
             cookingTimeIndex != -1 && caloriesIndex != -1 &&
             portionsIndex != -1 && descriptionIndex != -1 &&
-            recipeUrlIndex != -1) {
+            recipeUrlIndex != -1
+        ) {
 
             if (cursor.moveToFirst()) {
                 do {
@@ -193,9 +174,11 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
         return recipeList
     }
 
+    // 레시피ID로 레시피 찾아서 리턴
     fun readRecipeById(recipeId: Int): Recipe? {
         val db = this.readableDatabase
-        val cursor: Cursor = db.rawQuery("SELECT * FROM recipes WHERE id = ?", arrayOf(recipeId.toString()))
+        val cursor: Cursor =
+            db.rawQuery("SELECT * FROM recipes WHERE id = ?", arrayOf(recipeId.toString()))
 
         // 열 인덱스 확인
         val idIndex = cursor.getColumnIndex("id")
@@ -254,18 +237,27 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             "unit" to unit,
             "expiryDate" to expiryDate
         )
-        return firestore.collection("users").document(userId).collection("ingredients").add(ingredient)
+        return firestore.collection("users").document(userId).collection("ingredients")
+            .add(ingredient)
     }
 
     // 재료 수정
-    fun updateIngredient(userId: String, documentId: String, name: String, quantity: Int, unit: String, expiryDate: String): Task<Void> {
+    fun updateIngredient(
+        userId: String,
+        documentId: String,
+        name: String,
+        quantity: Int,
+        unit: String,
+        expiryDate: String
+    ): Task<Void> {
         val ingredient = hashMapOf(
             "name" to name,
             "quantity" to quantity,
             "unit" to unit,
             "expiryDate" to expiryDate
         )
-        return firestore.collection("users").document(userId).collection("ingredients").document(documentId).set(ingredient) // documentId 사용
+        return firestore.collection("users").document(userId).collection("ingredients")
+            .document(documentId).set(ingredient) // documentId 사용
             .addOnSuccessListener {
                 Log.d("DatabaseHelper", "Ingredient updated with ID: $documentId")
             }.addOnFailureListener { e ->
@@ -276,40 +268,44 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
 
     // 재료 목록 초기화
     fun clearIngredients(userId: String): Task<QuerySnapshot> {
-        return firestore.collection("users").document(userId).collection("ingredients").get().addOnSuccessListener { result ->
-            for (document in result) {
-                firestore.collection("users").document(userId).collection("ingredients").document(document.id).delete()
-            }
-            Log.d("DatabaseHelper", "All ingredients cleared")
-        }.addOnFailureListener { e ->
+        return firestore.collection("users").document(userId).collection("ingredients").get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    firestore.collection("users").document(userId).collection("ingredients")
+                        .document(document.id).delete()
+                }
+                Log.d("DatabaseHelper", "All ingredients cleared")
+            }.addOnFailureListener { e ->
             Log.e("DatabaseHelper", "Error clearing ingredients", e)
         }
     }
 
     // 재료 목록 읽기
     fun readIngredients(userId: String, callback: (List<Ingredient>) -> Unit) {
-        firestore.collection("users").document(userId).collection("ingredients").get().addOnSuccessListener { result ->
-            val ingredients = mutableListOf<Ingredient>()
-            for (document in result) {
-                val ingredient = Ingredient(
-                    id = document.id, // Firestore 문서 ID를 직접 사용
-                    name = document.getString("name") ?: "",
-                    quantity = document.getLong("quantity")?.toInt() ?: 0,
-                    unit = document.getString("unit") ?: "",
-                    expiryDate = document.getString("expiryDate") ?: ""
-                )
-                ingredients.add(ingredient)
-            }
-            callback(ingredients)
-            Log.d("DatabaseHelper", "Ingredients: $ingredients")
-        }.addOnFailureListener { e ->
+        firestore.collection("users").document(userId).collection("ingredients").get()
+            .addOnSuccessListener { result ->
+                val ingredients = mutableListOf<Ingredient>()
+                for (document in result) {
+                    val ingredient = Ingredient(
+                        id = document.id, // Firestore 문서 ID를 직접 사용
+                        name = document.getString("name") ?: "",
+                        quantity = document.getLong("quantity")?.toInt() ?: 0,
+                        unit = document.getString("unit") ?: "",
+                        expiryDate = document.getString("expiryDate") ?: ""
+                    )
+                    ingredients.add(ingredient)
+                }
+                callback(ingredients)
+                Log.d("DatabaseHelper", "Ingredients: $ingredients")
+            }.addOnFailureListener { e ->
             Log.e("DatabaseHelper", "Error getting ingredients", e)
         }
     }
 
     // 재료 삭제
     fun deleteIngredient(userId: String, documentId: String): Task<Void> { // documentId 매개변수 사용
-        return firestore.collection("users").document(userId).collection("ingredients").document(documentId).delete() // documentId 사용
+        return firestore.collection("users").document(userId).collection("ingredients")
+            .document(documentId).delete() // documentId 사용
             .addOnSuccessListener {
                 Log.d("DatabaseHelper", "Ingredient deleted with ID: $documentId")
             }.addOnFailureListener { e ->
@@ -317,9 +313,14 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
     }
 
-    fun addExcludedIngredient(userId: String, name: String, callback: (() -> Unit)? = null): Task<Void> { // 콜백 추가
+    fun addExcludedIngredient(
+        userId: String,
+        name: String,
+        callback: (() -> Unit)? = null
+    ): Task<Void> { // 콜백 추가
         val data = hashMapOf("name" to name)
-        return firestore.collection("users").document(userId).collection("excludedIngredients").document(name).set(data)
+        return firestore.collection("users").document(userId).collection("excludedIngredients")
+            .document(name).set(data)
             .addOnSuccessListener {
                 // Firestore에 데이터 추가 성공 후 콜백 함수 호출
                 callback?.invoke()
@@ -349,7 +350,8 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
 
 
     fun deleteExcludedIngredient(userId: String, name: String, callback: (Boolean) -> Unit) {
-        firestore.collection("users").document(userId).collection("excludedIngredients").document(name).delete()
+        firestore.collection("users").document(userId).collection("excludedIngredients")
+            .document(name).delete()
             .addOnSuccessListener {
                 callback(true) // 삭제 성공 시 true 전달
             }
@@ -358,74 +360,4 @@ class DatabaseHelper(private val context: Context) : SQLiteOpenHelper(context, D
             }
     }
 
-    // 북마크 추가 기능
-    fun addBookmark(userId: String, title: String, description: String, callback: (Boolean) -> Unit) {
-        val bookmarkCollection = firestore.collection("users").document(userId).collection("bookmarks")
-
-        bookmarkCollection.whereEqualTo("title", title).get()
-            .addOnSuccessListener { result ->
-                if (result.isEmpty) {
-                    val bookmark = mapOf(
-                        "title" to title,
-                        "description" to description
-                    )
-                    bookmarkCollection.add(bookmark)
-                        .addOnSuccessListener {
-                        callback(true)
-                    }.addOnFailureListener {
-                        callback(false)
-                    }
-                } else {
-                    callback(false)
-                }
-            }
-            .addOnFailureListener {
-                callback(false)
-            }
-    }
-
-    // 북마크 불러오기
-    fun getBookmarks(userId: String, callback: (List<Bookmark>) -> Unit) {
-        firestore.collection("users").document(userId).collection("bookmarks").get()
-            .addOnSuccessListener { result ->
-                val bookmarks = result.mapNotNull { document ->
-                    Bookmark(
-                        id = document.id,
-                        title = document.getString("title") ?: "",
-                        description = document.getString("description") ?: ""
-                    )
-                }
-                callback(bookmarks)
-            }
-            .addOnFailureListener { exception ->
-                Log.e("DatabaseHelper", "Error getting bookmarks.", exception)
-                callback(emptyList())
-            }
-    }
-
-    // 북마크 업데이트
-    fun updateBookmark(userId: String, bookmarkId: String, title: String, description: String, callback: (Boolean) -> Unit) {
-        val bookmark = mapOf(
-            "title" to title,
-            "description" to description
-        )
-        firestore.collection("users").document(userId).collection("bookmarks").document(bookmarkId).set(bookmark)
-            .addOnSuccessListener {
-                callback(true)
-            }
-            .addOnFailureListener {
-                callback(false)
-            }
-    }
-
-    // 북마크 삭제
-    fun deleteBookmark(userId: String, bookmarkId: String, callback: (Boolean) -> Unit) {
-        firestore.collection("users").document(userId).collection("bookmarks").document(bookmarkId).delete()
-            .addOnSuccessListener {
-                callback(true)
-            }
-            .addOnFailureListener {
-                callback(false)
-            }
-    }
 }
